@@ -97,6 +97,16 @@ public class SelectTextHelper {
                 //重置选中信息，隐藏选中操作
                 resetSelectionInfo();
                 hideSelectView();
+
+                //文本点击时，清除已记录的缓存
+                SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
+                if (lastSelectText != null) {
+                    if (!lastSelectText.equals(SelectTextHelper.this)) {
+                        lastSelectText.resetSelectionInfo();
+                        lastSelectText.hideSelectView();
+                    }
+                }
+                SelectTextManager.getInstance().setLastSelectText(null);
             }
         });
         mTextView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
@@ -135,18 +145,11 @@ public class SelectTextHelper {
                 resetSelectionInfo();
                 hideSelectView();
 
-//                if (!isHideWhenScroll && !isHide) {
-//                    isHideWhenScroll = true;
-//                    if (mOperateWindow != null) {
-//                        mOperateWindow.dismiss();
-//                    }
-//                    if (mStartHandle != null) {
-//                        mStartHandle.dismiss();
-//                    }
-//                    if (mEndHandle != null) {
-//                        mEndHandle.dismiss();
-//                    }
-//                }
+                //销毁当前缓存
+                SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
+                if (lastSelectText != null && lastSelectText.equals(SelectTextHelper.this)) {
+                    SelectTextManager.getInstance().setLastSelectText(null);
+                }
             }
         };
         mTextView.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener);
@@ -238,6 +241,17 @@ public class SelectTextHelper {
         mStartHandle.show();
         mEndHandle.show();
         mOperateWindow.show();
+
+        //确保只会有一个处于选择复制中
+        SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
+        if (lastSelectText != null) {
+            if (lastSelectText.equals(this)) {
+                return;
+            }
+            lastSelectText.resetSelectionInfo();
+            lastSelectText.hideSelectView();
+        }
+        SelectTextManager.getInstance().setLastSelectText(this);
     }
 
     /**
@@ -296,6 +310,12 @@ public class SelectTextHelper {
         mStartHandle = null;
         mEndHandle = null;
         mOperateWindow = null;
+
+        //记录的缓存为自身时才清除缓存
+        SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
+        if (lastSelectText != null && lastSelectText.equals(SelectTextHelper.this)) {
+            SelectTextManager.getInstance().setLastSelectText(null);
+        }
     }
 
     /**
@@ -330,6 +350,9 @@ public class SelectTextHelper {
                     }
                     SelectTextHelper.this.resetSelectionInfo();
                     SelectTextHelper.this.hideSelectView();
+
+                    //复制后清除缓存
+                    SelectTextManager.getInstance().setLastSelectText(null);
                 }
             });
             contentView.findViewById(R.id.tv_select_all).setOnClickListener(new View.OnClickListener() {
