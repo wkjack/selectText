@@ -1,6 +1,7 @@
 package com.wk.selecttextlib;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -25,6 +26,8 @@ import android.widget.TextView;
 
 import androidx.annotation.ColorInt;
 
+import java.util.List;
+
 @SuppressLint("ClickableViewAccessibility")
 public class SelectTextHelper {
 
@@ -42,6 +45,7 @@ public class SelectTextHelper {
     private final int mSelectedColor; //选中背景
     private final int mCursorHandleColor; //选中图标颜色
     private final int mCursorHandleSize; //选中图标尺寸
+    private List<SelectOption> mSelectOptions; //操作集合
 
 
     private int mTouchX; //触点坐标X
@@ -62,6 +66,7 @@ public class SelectTextHelper {
         mSelectedColor = builder.mSelectedColor;
         mCursorHandleColor = builder.mCursorHandleColor;
         mCursorHandleSize = TextLayoutUtil.dp2px(mContext, builder.mCursorHandleSizeInDp);
+        mSelectOptions = builder.selectOptions;
         init();
     }
 
@@ -324,8 +329,6 @@ public class SelectTextHelper {
     private class OperateWindow {
 
         private PopupWindow mWindow; //弹框
-        private int[] mTempCoors = new int[2]; //坐标
-
         private int mWidth; //宽
         private int mHeight; //高
 
@@ -371,45 +374,59 @@ public class SelectTextHelper {
         }
 
         public void show() {
-            //获取文本控件在当前窗口中的位置
+            //计算显示位置步骤
+            int[] mTempCoors = new int[2];
             mTextView.getLocationInWindow(mTempCoors);
             Layout layout = mTextView.getLayout();
-            //坐标X = 获取该字符左边的x坐标 + 控件所在x坐标
+
+
+            //弹框显示的X坐标 = 获取该字符左边的x坐标 + 控件所在x坐标
             int posX = mTempCoors[0] + (int) layout.getPrimaryHorizontal(mSelectionInfo.mStart);
             if (posX <= 0) {
                 posX = 16;
             }
-
-            int posY = mTempCoors[1] + layout.getLineTop(layout.getLineForOffset(mSelectionInfo.mStart)) - mHeight - 16;
-
-            Rect visibleRect = new Rect();
-            mTextView.getGlobalVisibleRect(visibleRect);
-            if (visibleRect.top != mTempCoors[1]) {
-                //控件部分内容被遮挡
-                if (posY < (visibleRect.top - mHeight - 16)) {
-                    //计算显示的Y坐标：使用结束位置计算
-                    posY = mTempCoors[1] + layout.getLineBottom(layout.getLineForOffset(mSelectionInfo.mEnd)) + 16;
-
-                    if (posY < visibleRect.top) {
-                        //超出顶部区域
-                        posY = visibleRect.top;
-                    } else if (posY + mHeight + 16 > visibleRect.bottom) {
-                        posY = visibleRect.top - mHeight - 16;
-                    }
-                } else {
-                    //啥也不做
-                }
-            } else {
-                //控件内容未被遮挡
-                if (posY <= 0) {
-                    posY = mTempCoors[1] + layout.getLineBottom(layout.getLineForOffset(mSelectionInfo.mEnd)) + 16;
-                }
-            }
-
             //如果超过屏幕宽度
             if (posX + mWidth > TextLayoutUtil.getScreenWidth(mContext)) {
                 posX = TextLayoutUtil.getScreenWidth(mContext) - mWidth - 16;
             }
+
+            //获取decorView的显示区域
+            Rect rectangle = new Rect();
+            ((Activity) mContext).getWindow().getDecorView().getWindowVisibleDisplayFrame(rectangle);
+
+            //1. 尝试计算顶部显示
+            int topY = layout.getLineTop(layout.getLineForOffset(mSelectionInfo.mStart));
+            int realTopY = mTempCoors[1] + mTextView.getPaddingTop() + topY;
+            if (realTopY - mHeight - 16 > rectangle.top) {
+                //弹框可以显示在getDecorView()区域内
+
+                int posY = realTopY - mHeight - 16;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    //设置高度
+                    mWindow.setElevation(8f);
+                }
+                mWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, posX, posY);
+                return;
+            }
+
+            //2. 顶部不够显示，尝试计算底部显示
+            int bottomY = layout.getLineBottom(layout.getLineForOffset(mSelectionInfo.mEnd));
+            int realBottomY = mTempCoors[1] + mTextView.getPaddingTop() + bottomY;
+
+            if (realBottomY + mHeight + 16 <= rectangle.bottom) {
+                //未超出显示区域
+
+                int posY = realBottomY + 16;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    //设置高度
+                    mWindow.setElevation(8f);
+                }
+                mWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, posX, posY);
+                return;
+            }
+
+            //3. 中间显示
+            int posY = (realTopY +realBottomY)/2 + 16;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 //设置高度
                 mWindow.setElevation(8f);
@@ -579,8 +596,6 @@ public class SelectTextHelper {
             if (updateLocation) {
                 mPopupWindow.update(realX, realY, -1, -1);
             } else {
-
-                Log.e(TAG, "游标显示位置：" + realX + "/" + realY);
                 mPopupWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, realX, realY);
             }
         }
@@ -601,6 +616,7 @@ public class SelectTextHelper {
         int mCursorHandleColor = 0xFF1379D6;
         int mSelectedColor = 0xFFAFE1F4;
         float mCursorHandleSizeInDp = 24;
+        List<SelectOption> selectOptions;
 
         public Builder(TextView textView) {
             mTextView = textView;
@@ -618,6 +634,11 @@ public class SelectTextHelper {
 
         public Builder setSelectedColor(@ColorInt int selectedBgColor) {
             mSelectedColor = selectedBgColor;
+            return this;
+        }
+
+        public Builder setSelectOptions(List<SelectOption> selectOptions) {
+            this.selectOptions = selectOptions;
             return this;
         }
 
