@@ -1,0 +1,3 @@
+include ':selectTextLib'
+include ':app'
+rootProject.name = "selectText"
