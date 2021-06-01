@@ -4,17 +4,13 @@
     android:layout_height="wrap_content"
     android:background="@drawable/bg_operate_window"
     android:orientation="horizontal"
-    android:paddingLeft="5dp"
-    android:paddingRight="5dp">
+    android:padding="5dp">
 
-    <TextView
-        android:id="@+id/tv_copy"
-        android:text="@string/copy"
-        style="@style/OperateTextView"/>
-
-    <TextView
-        android:id="@+id/tv_select_all"
-        android:text="@string/select_all"
-        style="@style/OperateTextView"/>
+    <GridView
+        android:id="@+id/select_option"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:horizontalSpacing="5dp"
+        android:verticalSpacing="5dp" />
 
 </LinearLayout>

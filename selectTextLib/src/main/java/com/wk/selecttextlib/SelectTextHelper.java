@@ -2,8 +2,6 @@ package com.wk.selecttextlib;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -18,9 +16,10 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.MeasureSpec;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.AdapterView;
+import android.widget.GridView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
@@ -39,6 +38,7 @@ public class SelectTextHelper {
     private OperateWindow mOperateWindow; //操作弹框
     private final SelectionInfo mSelectionInfo = new SelectionInfo(); //选中信息
     private OnSelectListener mSelectListener; //选中回调
+    private OnSelectOptionListener selectOptionListener;
 
     private final Context mContext; //上下文
     private final TextView mTextView; //文本控件
@@ -76,7 +76,6 @@ public class SelectTextHelper {
         mTextView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Log.e(TAG, "长按：" + mTouchX + ":" + mTouchY);
                 //长按显示选中布局
                 showSelectView(mTouchX, mTouchY);
                 return true;
@@ -89,8 +88,6 @@ public class SelectTextHelper {
                 //记录触摸点坐标
                 mTouchX = (int) event.getX();
                 mTouchY = (int) event.getY();
-
-                Log.e(TAG, "触摸：" + mTouchX + ":" + mTouchY);
                 return false;
             }
         });
@@ -98,7 +95,6 @@ public class SelectTextHelper {
         mTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.e(TAG, "点击");
                 //重置选中信息，隐藏选中操作
                 resetSelectionInfo();
                 hideSelectView();
@@ -123,7 +119,6 @@ public class SelectTextHelper {
             @Override
             public void onViewDetachedFromWindow(View v) {
                 //控件解除绑定做销毁操作
-                Log.e(TAG, "销毁");
                 destroy();
             }
         });
@@ -144,7 +139,6 @@ public class SelectTextHelper {
         mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
             @Override
             public void onScrollChanged() {
-                Log.e(TAG, "滚动");
                 //滚动监听处理
                 isHideWhenScroll = false;
                 resetSelectionInfo();
@@ -158,8 +152,6 @@ public class SelectTextHelper {
             }
         };
         mTextView.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener);
-
-        mOperateWindow = new OperateWindow(mContext);
     }
 
     /**
@@ -243,6 +235,10 @@ public class SelectTextHelper {
         //设置选中内容样式、游标、操作框
         selectText(startOffset, endOffset);
 
+        if (mOperateWindow == null) {
+            mOperateWindow = new OperateWindow(mContext);
+        }
+
         mStartHandle.show();
         mEndHandle.show();
         mOperateWindow.show();
@@ -304,6 +300,10 @@ public class SelectTextHelper {
         mSelectListener = selectListener;
     }
 
+    public void setSelectOptionListener(OnSelectOptionListener selectOptionListener) {
+        this.selectOptionListener = selectOptionListener;
+    }
+
     /**
      * 销毁
      */
@@ -334,43 +334,84 @@ public class SelectTextHelper {
 
         public OperateWindow(final Context context) {
             View contentView = LayoutInflater.from(context).inflate(R.layout.layout_operate_windows, null);
-            contentView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
-                    MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
-            mWidth = contentView.getMeasuredWidth();
-            mHeight = contentView.getMeasuredHeight();
-            mWindow = new PopupWindow(contentView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, false);
-            mWindow.setClippingEnabled(false); //弹框在超出屏幕时不剪裁，即显示在正确的位置
+            GridView gridView = contentView.findViewById(R.id.select_option);
 
-            contentView.findViewById(R.id.tv_copy).setOnClickListener(new View.OnClickListener() {
+            SelectOptionAdapter adapter = new SelectOptionAdapter(context, mSelectOptions);
+            gridView.setAdapter(adapter);
+            gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
-                public void onClick(View v) {
-                    //复制到剪切板
-                    ClipboardManager clip = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
-                    clip.setPrimaryClip(ClipData.newPlainText(mSelectionInfo.mSelectionContent, mSelectionInfo.mSelectionContent));
-                    //选中回调
-                    if (mSelectListener != null) {
-                        mSelectListener.onTextSelected(mSelectionInfo.mSelectionContent);
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                    SelectOption selectOption = mSelectOptions.get(position);
+                    if (selectOption.getType() == SelectOption.TYPE_COPY) {
+
+                    } else if (selectOption.getType() == SelectOption.TYPE_COPY) {
+
                     }
-                    SelectTextHelper.this.resetSelectionInfo();
-                    SelectTextHelper.this.hideSelectView();
 
-                    //复制后清除缓存
-                    SelectTextManager.getInstance().setLastSelectText(null);
+                    if (selectOptionListener != null) {
+                        selectOptionListener.onSelectOption(mSelectOptions.get(position));
+                    }
                 }
             });
-            contentView.findViewById(R.id.tv_select_all).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    //全选处理
-                    hideSelectView();
-                    selectText(0, mTextView.getText().length());
-                    isHide = false;
 
-                    mStartHandle.show();
-                    mEndHandle.show();
-                    mOperateWindow.show();
+            int optionSize = mSelectOptions.size();
+
+            gridView.setNumColumns(Math.min(optionSize, 5));
+
+
+            mWidth = contentView.getPaddingLeft() + contentView.getPaddingRight()
+                    + Math.min(optionSize, 5) * TextLayoutUtil.dp2px(context, 60)
+                    + (Math.min(optionSize, 5) - 1) * gridView.getHorizontalSpacing();
+
+            int line;
+            if (optionSize <= 5) {
+                line = 1;
+            } else {
+                if (optionSize % 5 == 0) {
+                    line = optionSize / 5;
+                } else {
+                    line = optionSize / 5 + 1;
                 }
-            });
+            }
+            mHeight = contentView.getPaddingTop() + contentView.getPaddingBottom()
+                    + line * TextLayoutUtil.dp2px(context, 40)
+                    + (line - 1) * gridView.getVerticalSpacing();
+
+            mWindow = new PopupWindow(contentView, mWidth, ViewGroup.LayoutParams.WRAP_CONTENT, false);
+            mWindow.setClippingEnabled(false); //弹框在超出屏幕时不剪裁，即显示在正确的位置
+            Log.e(TAG, "设置宽高：" + mWidth + "/" + mHeight);
+
+//            contentView.findViewById(R.id.tv_copy).setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    //复制到剪切板
+//                    ClipboardManager clip = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
+//                    clip.setPrimaryClip(ClipData.newPlainText(mSelectionInfo.mSelectionContent, mSelectionInfo.mSelectionContent));
+//                    //选中回调
+//                    if (mSelectListener != null) {
+//                        mSelectListener.onTextSelected(mSelectionInfo.mSelectionContent);
+//                    }
+//                    SelectTextHelper.this.resetSelectionInfo();
+//                    SelectTextHelper.this.hideSelectView();
+//
+//                    //复制后清除缓存
+//                    SelectTextManager.getInstance().setLastSelectText(null);
+//                }
+//            });
+//            contentView.findViewById(R.id.tv_select_all).setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    //全选处理
+//                    hideSelectView();
+//                    selectText(0, mTextView.getText().length());
+//                    isHide = false;
+//
+//                    mStartHandle.show();
+//                    mEndHandle.show();
+//                    mOperateWindow.show();
+//                }
+//            });
         }
 
         public void show() {
@@ -426,7 +467,7 @@ public class SelectTextHelper {
             }
 
             //3. 中间显示
-            int posY = (realTopY +realBottomY)/2 + 16;
+            int posY = (realTopY + realBottomY) / 2 + 16;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 //设置高度
                 mWindow.setElevation(8f);
