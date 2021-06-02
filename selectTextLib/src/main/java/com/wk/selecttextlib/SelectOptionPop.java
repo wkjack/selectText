@@ -74,7 +74,7 @@ public class SelectOptionPop {
         mWindow.setClippingEnabled(false); //弹框在超出屏幕时不剪裁，即显示在正确的位置
     }
 
-    public void show(TextView mTextView, SelectionInfo mSelectionInfo) {
+    public void show(TextView mTextView, SelectionInfo mSelectionInfo, boolean updateLocation) {
         if (mTextView == null || mSelectionInfo == null) {
             return;
         }
@@ -115,7 +115,11 @@ public class SelectOptionPop {
                 //设置高度
                 mWindow.setElevation(8f);
             }
-            mWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, posX, posY);
+            if (updateLocation) {
+                mWindow.update(posX, posY, -1, -1);
+            } else {
+                mWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, posX, posY);
+            }
             return;
         }
 
@@ -131,7 +135,11 @@ public class SelectOptionPop {
                 //设置高度
                 mWindow.setElevation(8f);
             }
-            mWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, posX, posY);
+            if (updateLocation) {
+                mWindow.update(posX, posY, -1, -1);
+            } else {
+                mWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, posX, posY);
+            }
             return;
         }
 
@@ -141,7 +149,11 @@ public class SelectOptionPop {
             //设置高度
             mWindow.setElevation(8f);
         }
-        mWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, posX, posY);
+        if (updateLocation) {
+            mWindow.update(posX, posY, -1, -1);
+        } else {
+            mWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, posX, posY);
+        }
     }
 
     public void dismiss() {

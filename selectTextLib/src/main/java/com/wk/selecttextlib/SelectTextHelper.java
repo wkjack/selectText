@@ -165,9 +165,6 @@ public class SelectTextHelper {
      * @param y 文本控件的内部y坐标点
      */
     private void showSelectView(int x, int y) {
-        if (mStartHandle == null) mStartHandle = new CursorHandle(true);
-        if (mEndHandle == null) mEndHandle = new CursorHandle(false);
-
         //获取文本控件中最接近坐标的字符的索引位置，作为选中的起始位置
         int startOffset = TextLayoutUtil.getPreciseOffset(mTextView, x, y);
         //结束位置 = 起始位 + 1
@@ -182,8 +179,6 @@ public class SelectTextHelper {
         }
 
         selectInfo(startOffset, endOffset);
-
-        mOperateWindow = new SelectOptionPop(this);
         showOperatePopup();
 
         //确保只会有一个处于选择复制中
@@ -286,14 +281,23 @@ public class SelectTextHelper {
     public void showOperatePopup() {
         isHide = false;
 
-        if (mStartHandle != null) {
-            mStartHandle.show();
+        if (mStartHandle == null) {
+            mStartHandle = new CursorHandle(true);
+            mStartHandle.show(false);
+        } else {
+            mStartHandle.show(mStartHandle.isShowing());
         }
-        if (mEndHandle != null) {
-            mEndHandle.show();
+        if (mEndHandle == null) {
+            mEndHandle = new CursorHandle(false);
+            mEndHandle.show(false);
+        } else {
+            mEndHandle.show(mEndHandle.isShowing());
         }
         if (mOperateWindow != null) {
-            mOperateWindow.show(mTextView, mSelectionInfo);
+            mOperateWindow.show(mTextView, mSelectionInfo, mOperateWindow.isShowing());
+        } else {
+            mOperateWindow = new SelectOptionPop(this);
+            mOperateWindow.show(mTextView, mSelectionInfo, false);
         }
     }
 
@@ -370,7 +374,7 @@ public class SelectTextHelper {
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
                     //触摸结束处理：显示操作框
-                    mOperateWindow.show(mTextView, mSelectionInfo);
+                    mOperateWindow.show(mTextView, mSelectionInfo, true);
                     break;
                 case MotionEvent.ACTION_MOVE:
                     //触摸移动：隐藏操作框，记录当前点并更新
@@ -444,10 +448,6 @@ public class SelectTextHelper {
             }
         }
 
-        public void show() {
-            show(false);
-        }
-
         /**
          * 统一计算显示位置并显示游标
          *
@@ -473,6 +473,10 @@ public class SelectTextHelper {
             } else {
                 mPopupWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, realX, realY);
             }
+        }
+
+        public boolean isShowing() {
+            return mPopupWindow.isShowing();
         }
     }
 
