@@ -308,21 +308,15 @@ public class SelectTextHelper {
             }
         }
 
-        private int mBeforeDragStart; //开始拖拽时的选中起始坐标
-        private int mBeforeDragEnd; //开始拖拽时的选中结束坐标
-
         @Override
         public boolean onTouchEvent(MotionEvent event) {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
-                    //记录当前点、选中文本的坐标
-                    mBeforeDragStart = mSelectionInfo.mStart;
-                    mBeforeDragEnd = mSelectionInfo.mEnd;
                     break;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
                     //触摸结束处理：显示操作框
-                    mOperateWindow.show(mTextView, mSelectionInfo, true);
+                    mOperateWindow.show(mTextView, mSelectionInfo, mOperateWindow.isShowing());
                     break;
                 case MotionEvent.ACTION_MOVE:
                     //触摸移动：隐藏操作框，记录当前点并更新
@@ -361,38 +355,41 @@ public class SelectTextHelper {
 
             //新旧偏移位不一致：更新信息
             if (offset != oldOffset) {
-                clearSelectInfo();
                 if (isLeft) {
                     //当前游标为起始游标
-                    if (offset > mBeforeDragEnd) {
+                    if (offset > mSelectionInfo.mEnd) {
+                        //起始游标滑动到结束游标之后，需要处理：
+                        //1.更新选中内容
+                        selectInfo(mSelectionInfo.mEnd, offset);
 
-                        //结束游标变更为起始游标并更新位置
+                        //2.结束游标变更为起始坐标
                         CursorHandle handle = getCursorHandle(false);
                         handle.changeDirection();
-                        handle.show(true);
+                        handle.show(handle.isShowing());
 
-                        //当前游标变更为结束游标
+                        //3.起始游标变更为结束游标
                         changeDirection();
-                        mBeforeDragStart = mBeforeDragEnd;
-                        selectInfo(mBeforeDragEnd, offset);
                     } else {
                         selectInfo(offset, -1);
                     }
-                    //更新游标位置
-                    show(true);
                 } else {
-                    if (offset < mBeforeDragStart) {
+                    if (offset < mSelectionInfo.mStart) {
+                        //起始游标滑动到结束游标之后，需要处理：
+                        //1.更新选中内容
+                        selectInfo(offset, mSelectionInfo.mStart);
+
+                        //2.起始游标变更为结束游标
                         CursorHandle handle = getCursorHandle(true);
                         handle.changeDirection();
+                        handle.show(handle.isShowing());
+
+                        //3.结束游标变更为起始坐标
                         changeDirection();
-                        mBeforeDragEnd = mBeforeDragStart;
-                        selectInfo(offset, mBeforeDragStart);
-                        handle.show(true);
                     } else {
-                        selectInfo(mBeforeDragStart, offset);
+                        selectInfo(-1, offset);
                     }
-                    show(true);
                 }
+                show(isShowing());
             }
         }
 
