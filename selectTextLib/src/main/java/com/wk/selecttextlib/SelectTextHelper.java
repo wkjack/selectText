@@ -39,7 +39,6 @@ public class SelectTextHelper {
     private int mTouchY; //触点坐标Y
     private Spannable mSpannable; //文本内容
     private BackgroundColorSpan mSpan; //选中背景Span
-    private boolean isHide = true; //选中控件是否隐藏
 
     private ViewTreeObserver.OnScrollChangedListener mOnScrollChangedListener;
 
@@ -245,8 +244,6 @@ public class SelectTextHelper {
      * 显示操作
      */
     public void showOperatePopup() {
-        isHide = false;
-
         if (mStartHandle == null) {
             mStartHandle = new CursorHandle(true);
             mStartHandle.show(false);
@@ -271,7 +268,6 @@ public class SelectTextHelper {
      * 隐藏操作
      */
     public void hideOperatePopup() {
-        isHide = true;
         if (mStartHandle != null) {
             mStartHandle.dismiss();
         }
