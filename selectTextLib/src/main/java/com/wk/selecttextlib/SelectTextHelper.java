@@ -16,6 +16,7 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
 
 @SuppressLint("ClickableViewAccessibility")
 public class SelectTextHelper {
@@ -50,6 +51,8 @@ public class SelectTextHelper {
         mSelectedColor = builder.mSelectedColor;
         mCursorHandleColor = builder.mCursorHandleColor;
         mCursorHandleSize = TextLayoutUtil.dp2px(mContext, builder.mCursorHandleSizeInDp);
+
+        selectOptionListener = new DefOnSelectOptionListener(this);
         init();
     }
 
@@ -145,7 +148,7 @@ public class SelectTextHelper {
         SelectTextManager.getInstance().setLastSelectText(this);
     }
 
-    public void setSelectOptionListener(OnSelectOptionListener selectOptionListener) {
+    public void setSelectOptionListener(@NonNull OnSelectOptionListener selectOptionListener) {
         this.selectOptionListener = selectOptionListener;
     }
 
