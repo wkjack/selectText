@@ -2,6 +2,10 @@ plugins {
     id 'com.android.library'
 }
 
+apply plugin: 'com.github.dcendents.android-maven'
+//xxx为github的用户名
+group = 'com.github.wkjack'
+
 android {
     compileSdkVersion 30
     buildToolsVersion "30.0.3"
