@@ -21,7 +21,6 @@ import androidx.annotation.ColorInt;
 public class SelectTextHelper {
 
     private final static int DEFAULT_SELECTION_LENGTH = 1;
-    private static final int DEFAULT_SHOW_DURATION = 100;
 
     private CursorHandle mStartHandle; // 选中起始图标
     private CursorHandle mEndHandle; // 选中结束图标
@@ -40,10 +39,8 @@ public class SelectTextHelper {
     private int mTouchY; //触点坐标Y
     private Spannable mSpannable; //文本内容
     private BackgroundColorSpan mSpan; //选中背景Span
-    private boolean isHideWhenScroll = false; //滚动式隐藏
     private boolean isHide = true; //选中控件是否隐藏
 
-    private ViewTreeObserver.OnPreDrawListener mOnPreDrawListener;
     private ViewTreeObserver.OnScrollChangedListener mOnScrollChangedListener;
 
     private final String TAG = "SelectTag";
@@ -110,24 +107,10 @@ public class SelectTextHelper {
             }
         });
 
-        mOnPreDrawListener = new ViewTreeObserver.OnPreDrawListener() {
-            @Override
-            public boolean onPreDraw() {
-                //控件绘制前处理：
-                if (isHideWhenScroll) {
-                    isHideWhenScroll = false;
-                    postShowSelectView();
-                }
-                return true;
-            }
-        };
-        mTextView.getViewTreeObserver().addOnPreDrawListener(mOnPreDrawListener);
-
         mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
             @Override
             public void onScrollChanged() {
                 //滚动监听处理
-                isHideWhenScroll = false;
                 clearSelectInfo();
                 hideOperatePopup();
 
@@ -140,23 +123,6 @@ public class SelectTextHelper {
         };
         mTextView.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener);
     }
-
-    /**
-     * 显示选中操作控件
-     */
-    private void postShowSelectView() {
-        mTextView.removeCallbacks(mShowSelectViewRunnable);
-        mTextView.postDelayed(mShowSelectViewRunnable, DEFAULT_SHOW_DURATION);
-    }
-
-    private final Runnable mShowSelectViewRunnable = new Runnable() {
-        @Override
-        public void run() {
-            //延迟显示操作框、游标图标
-            if (isHide) return;
-            showOperatePopup();
-        }
-    };
 
     /**
      * 显示选中控件
@@ -203,7 +169,6 @@ public class SelectTextHelper {
      */
     public void destroy() {
         mTextView.getViewTreeObserver().removeOnScrollChangedListener(mOnScrollChangedListener);
-        mTextView.getViewTreeObserver().removeOnPreDrawListener(mOnPreDrawListener);
         clearSelectInfo();
         hideOperatePopup();
         mStartHandle = null;
