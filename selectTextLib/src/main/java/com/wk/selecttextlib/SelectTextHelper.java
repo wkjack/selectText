@@ -56,40 +56,26 @@ public class SelectTextHelper {
     private void init() {
         //设置文本控件可设置样式
         mTextView.setText(mTextView.getText(), TextView.BufferType.SPANNABLE);
-        mTextView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                //长按显示选中布局
-                showSelectView(mTouchX, mTouchY);
-                return true;
-            }
+        mTextView.setOnLongClickListener(v -> {
+            //长按显示选中布局
+            showSelectView(mTouchX, mTouchY);
+            return true;
         });
 
-        mTextView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                //记录触摸点坐标
-                mTouchX = (int) event.getX();
-                mTouchY = (int) event.getY();
-                return false;
-            }
+        mTextView.setOnTouchListener((v, event) -> {
+            //记录触摸点坐标
+            mTouchX = (int) event.getX();
+            mTouchY = (int) event.getY();
+            return false;
         });
 
-        mTextView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //重置选中信息，隐藏选中操作
-                clearSelectInfo();
-                hideOperatePopup();
+        mTextView.setOnClickListener(v -> {
+            //重置选中信息，隐藏选中操作
+            clearSelectInfo();
+            hideOperatePopup();
 
-                //文本点击时，清除已记录的缓存
-                SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
-                if (lastSelectText != null) {
-                    if (!lastSelectText.equals(SelectTextHelper.this)) {
-                        lastSelectText.clearSelectInfo();
-                        lastSelectText.hideOperatePopup();
-                    }
-                }
+            SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
+            if (lastSelectText != null && lastSelectText.equals(SelectTextHelper.this)) {
                 SelectTextManager.getInstance().setLastSelectText(null);
             }
         });
