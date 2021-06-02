@@ -175,6 +175,10 @@ public class SelectTextHelper {
         //确保文本内容样式可设置且选中索引在文本内容范围内
         if (mSpannable == null || startOffset >= mTextView.getText().length()) {
             hideOperatePopup();
+            SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
+            if (lastSelectText != null && lastSelectText.equals(SelectTextHelper.this)) {
+                SelectTextManager.getInstance().setLastSelectText(null);
+            }
             return;
         }
 
@@ -183,10 +187,7 @@ public class SelectTextHelper {
 
         //确保只会有一个处于选择复制中
         SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
-        if (lastSelectText != null) {
-            if (lastSelectText.equals(this)) {
-                return;
-            }
+        if (lastSelectText != null && !lastSelectText.equals(this)) {
             lastSelectText.clearSelectInfo();
             lastSelectText.hideOperatePopup();
         }
