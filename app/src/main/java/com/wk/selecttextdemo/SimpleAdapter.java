@@ -9,7 +9,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.wk.selecttextlib.OnSelectListener;
 import com.wk.selecttextlib.SelectTextHelper;
 
 import java.util.ArrayList;
@@ -43,13 +42,6 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.Holder> {
                 .setCursorHandleSizeInDp(20)
                 .setCursorHandleColor(context.getResources().getColor(R.color.cursor_handle_color))
                 .build();
-
-        mSelectableTextHelper.setSelectListener(new OnSelectListener() {
-            @Override
-            public void onTextSelected(CharSequence content) {
-
-            }
-        });
     }
 
     @Override

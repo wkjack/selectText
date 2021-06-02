@@ -1,5 +1,8 @@
 package com.wk.selecttextlib;
 
+/**
+ * 管理记录上一次操作
+ */
 public class SelectTextManager {
 
     private SelectTextHelper lastSelectText = null;

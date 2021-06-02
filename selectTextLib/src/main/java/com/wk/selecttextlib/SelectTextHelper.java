@@ -1,31 +1,21 @@
 package com.wk.selecttextlib;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Rect;
-import android.os.Build;
 import android.text.Layout;
 import android.text.Spannable;
 import android.text.Spanned;
 import android.text.style.BackgroundColorSpan;
-import android.util.Log;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.widget.AdapterView;
-import android.widget.GridView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import androidx.annotation.ColorInt;
-
-import java.util.List;
 
 @SuppressLint("ClickableViewAccessibility")
 public class SelectTextHelper {
@@ -35,9 +25,8 @@ public class SelectTextHelper {
 
     private CursorHandle mStartHandle; // 选中起始图标
     private CursorHandle mEndHandle; // 选中结束图标
-    private OperateWindow mOperateWindow; //操作弹框
+    private SelectOptionPop mOperateWindow; //操作弹框
     private final SelectionInfo mSelectionInfo = new SelectionInfo(); //选中信息
-    private OnSelectListener mSelectListener; //选中回调
     private OnSelectOptionListener selectOptionListener;
 
     private final Context mContext; //上下文
@@ -45,7 +34,6 @@ public class SelectTextHelper {
     private final int mSelectedColor; //选中背景
     private final int mCursorHandleColor; //选中图标颜色
     private final int mCursorHandleSize; //选中图标尺寸
-    private List<SelectOption> mSelectOptions; //操作集合
 
 
     private int mTouchX; //触点坐标X
@@ -66,7 +54,6 @@ public class SelectTextHelper {
         mSelectedColor = builder.mSelectedColor;
         mCursorHandleColor = builder.mCursorHandleColor;
         mCursorHandleSize = TextLayoutUtil.dp2px(mContext, builder.mCursorHandleSizeInDp);
-        mSelectOptions = builder.selectOptions;
         init();
     }
 
@@ -96,15 +83,15 @@ public class SelectTextHelper {
             @Override
             public void onClick(View v) {
                 //重置选中信息，隐藏选中操作
-                resetSelectionInfo();
-                hideSelectView();
+                clearSelectInfo();
+                hideOperatePopup();
 
                 //文本点击时，清除已记录的缓存
                 SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
                 if (lastSelectText != null) {
                     if (!lastSelectText.equals(SelectTextHelper.this)) {
-                        lastSelectText.resetSelectionInfo();
-                        lastSelectText.hideSelectView();
+                        lastSelectText.clearSelectInfo();
+                        lastSelectText.hideOperatePopup();
                     }
                 }
                 SelectTextManager.getInstance().setLastSelectText(null);
@@ -141,8 +128,8 @@ public class SelectTextHelper {
             public void onScrollChanged() {
                 //滚动监听处理
                 isHideWhenScroll = false;
-                resetSelectionInfo();
-                hideSelectView();
+                clearSelectInfo();
+                hideOperatePopup();
 
                 //销毁当前缓存
                 SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
@@ -167,46 +154,9 @@ public class SelectTextHelper {
         public void run() {
             //延迟显示操作框、游标图标
             if (isHide) return;
-            if (mOperateWindow != null) {
-                mOperateWindow.show();
-            }
-            if (mStartHandle != null) {
-                mStartHandle.show();
-            }
-            if (mEndHandle != null) {
-                mEndHandle.show();
-            }
+            showOperatePopup();
         }
     };
-
-    /**
-     * 隐藏选中操作控件
-     */
-    private void hideSelectView() {
-        //隐藏
-        isHide = true;
-        if (mStartHandle != null) {
-            mStartHandle.dismiss();
-        }
-        if (mEndHandle != null) {
-            mEndHandle.dismiss();
-        }
-        if (mOperateWindow != null) {
-            mOperateWindow.dismiss();
-        }
-    }
-
-    /**
-     * 重置选中信息
-     */
-    private void resetSelectionInfo() {
-        //清空选中内容、样式
-        mSelectionInfo.mSelectionContent = null;
-        if (mSpannable != null && mSpan != null) {
-            mSpannable.removeSpan(mSpan);
-            mSpan = null;
-        }
-    }
 
     /**
      * 显示选中控件
@@ -215,9 +165,6 @@ public class SelectTextHelper {
      * @param y 文本控件的内部y坐标点
      */
     private void showSelectView(int x, int y) {
-        hideSelectView();
-        resetSelectionInfo();
-        isHide = false;
         if (mStartHandle == null) mStartHandle = new CursorHandle(true);
         if (mEndHandle == null) mEndHandle = new CursorHandle(false);
 
@@ -230,18 +177,14 @@ public class SelectTextHelper {
         }
         //确保文本内容样式可设置且选中索引在文本内容范围内
         if (mSpannable == null || startOffset >= mTextView.getText().length()) {
+            hideOperatePopup();
             return;
         }
-        //设置选中内容样式、游标、操作框
-        selectText(startOffset, endOffset);
 
-        if (mOperateWindow == null) {
-            mOperateWindow = new OperateWindow(mContext);
-        }
+        selectInfo(startOffset, endOffset);
 
-        mStartHandle.show();
-        mEndHandle.show();
-        mOperateWindow.show();
+        mOperateWindow = new SelectOptionPop(this);
+        showOperatePopup();
 
         //确保只会有一个处于选择复制中
         SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
@@ -249,26 +192,76 @@ public class SelectTextHelper {
             if (lastSelectText.equals(this)) {
                 return;
             }
-            lastSelectText.resetSelectionInfo();
-            lastSelectText.hideSelectView();
+            lastSelectText.clearSelectInfo();
+            lastSelectText.hideOperatePopup();
         }
         SelectTextManager.getInstance().setLastSelectText(this);
     }
 
+    public void setSelectOptionListener(OnSelectOptionListener selectOptionListener) {
+        this.selectOptionListener = selectOptionListener;
+    }
+
     /**
-     * 设置选中文本及样式
-     *
-     * @param startPos 开始位置
-     * @param endPos   结束位置
+     * 销毁
      */
-    private void selectText(int startPos, int endPos) {
+    public void destroy() {
+        mTextView.getViewTreeObserver().removeOnScrollChangedListener(mOnScrollChangedListener);
+        mTextView.getViewTreeObserver().removeOnPreDrawListener(mOnPreDrawListener);
+        clearSelectInfo();
+        hideOperatePopup();
+        mStartHandle = null;
+        mEndHandle = null;
+        mOperateWindow = null;
+
+        //记录的缓存为自身时才清除缓存
+        SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
+        if (lastSelectText != null && lastSelectText.equals(SelectTextHelper.this)) {
+            SelectTextManager.getInstance().setLastSelectText(null);
+        }
+    }
+
+    //==========  对外提供的方法  ==========
+
+    public OnSelectOptionListener getSelectOptionListener() {
+        return selectOptionListener;
+    }
+
+    public TextView getTextView() {
+        return mTextView;
+    }
+
+    public SelectionInfo getSelectionInfo() {
+        return mSelectionInfo;
+    }
+
+    public void clearSelectInfo() {
+        //清空选中内容、样式
+        mSelectionInfo.mSelectionContent = null;
+        mSelectionInfo.mStart = -1;
+        mSelectionInfo.mEnd = -1;
+
+        if (mSpannable != null && mSpan != null) {
+            mSpannable.removeSpan(mSpan);
+            mSpan = null;
+        }
+    }
+
+    /**
+     * 设置选中内容
+     *
+     * @param start 起始位置
+     * @param end   结束位置
+     */
+    public void selectInfo(int start, int end) {
         //更新选中信息：起始位、结束位
-        if (startPos != -1) {
-            mSelectionInfo.mStart = startPos;
+        if (start != -1) {
+            mSelectionInfo.mStart = start;
         }
-        if (endPos != -1) {
-            mSelectionInfo.mEnd = endPos;
+        if (end != -1) {
+            mSelectionInfo.mEnd = end;
         }
+
         //校对起始位、结束位
         if (mSelectionInfo.mStart > mSelectionInfo.mEnd) {
             int temp = mSelectionInfo.mStart;
@@ -284,205 +277,46 @@ public class SelectTextHelper {
             mSelectionInfo.mSelectionContent = mSpannable.subSequence(mSelectionInfo.mStart, mSelectionInfo.mEnd).toString();
             //设置选中样式
             mSpannable.setSpan(mSpan, mSelectionInfo.mStart, mSelectionInfo.mEnd, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-            //选中回调
-            if (mSelectListener != null) {
-                mSelectListener.onTextSelected(mSelectionInfo.mSelectionContent);
-            }
         }
     }
 
     /**
-     * 设置选中监听器
-     *
-     * @param selectListener 监听器
+     * 显示操作
      */
-    public void setSelectListener(OnSelectListener selectListener) {
-        mSelectListener = selectListener;
-    }
+    public void showOperatePopup() {
+        isHide = false;
 
-    public void setSelectOptionListener(OnSelectOptionListener selectOptionListener) {
-        this.selectOptionListener = selectOptionListener;
-    }
-
-    /**
-     * 销毁
-     */
-    public void destroy() {
-        mTextView.getViewTreeObserver().removeOnScrollChangedListener(mOnScrollChangedListener);
-        mTextView.getViewTreeObserver().removeOnPreDrawListener(mOnPreDrawListener);
-        resetSelectionInfo();
-        hideSelectView();
-        mStartHandle = null;
-        mEndHandle = null;
-        mOperateWindow = null;
-
-        //记录的缓存为自身时才清除缓存
-        SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
-        if (lastSelectText != null && lastSelectText.equals(SelectTextHelper.this)) {
-            SelectTextManager.getInstance().setLastSelectText(null);
+        if (mStartHandle != null) {
+            mStartHandle.show();
+        }
+        if (mEndHandle != null) {
+            mEndHandle.show();
+        }
+        if (mOperateWindow != null) {
+            mOperateWindow.show(mTextView, mSelectionInfo);
         }
     }
 
     /**
-     * 操作弹框：复制、全选
+     * 隐藏操作
      */
-    private class OperateWindow {
-
-        private PopupWindow mWindow; //弹框
-        private int mWidth; //宽
-        private int mHeight; //高
-
-        public OperateWindow(final Context context) {
-            View contentView = LayoutInflater.from(context).inflate(R.layout.layout_operate_windows, null);
-            GridView gridView = contentView.findViewById(R.id.select_option);
-
-            SelectOptionAdapter adapter = new SelectOptionAdapter(context, mSelectOptions);
-            gridView.setAdapter(adapter);
-            gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-                    SelectOption selectOption = mSelectOptions.get(position);
-                    if (selectOption.getType() == SelectOption.TYPE_COPY) {
-
-                    } else if (selectOption.getType() == SelectOption.TYPE_COPY) {
-
-                    }
-
-                    if (selectOptionListener != null) {
-                        selectOptionListener.onSelectOption(mSelectOptions.get(position));
-                    }
-                }
-            });
-
-            int optionSize = mSelectOptions.size();
-
-            gridView.setNumColumns(Math.min(optionSize, 5));
-
-
-            mWidth = contentView.getPaddingLeft() + contentView.getPaddingRight()
-                    + Math.min(optionSize, 5) * TextLayoutUtil.dp2px(context, 60)
-                    + (Math.min(optionSize, 5) - 1) * gridView.getHorizontalSpacing();
-
-            int line;
-            if (optionSize <= 5) {
-                line = 1;
-            } else {
-                if (optionSize % 5 == 0) {
-                    line = optionSize / 5;
-                } else {
-                    line = optionSize / 5 + 1;
-                }
-            }
-            mHeight = contentView.getPaddingTop() + contentView.getPaddingBottom()
-                    + line * TextLayoutUtil.dp2px(context, 40)
-                    + (line - 1) * gridView.getVerticalSpacing();
-
-            mWindow = new PopupWindow(contentView, mWidth, ViewGroup.LayoutParams.WRAP_CONTENT, false);
-            mWindow.setClippingEnabled(false); //弹框在超出屏幕时不剪裁，即显示在正确的位置
-            Log.e(TAG, "设置宽高：" + mWidth + "/" + mHeight);
-
-//            contentView.findViewById(R.id.tv_copy).setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    //复制到剪切板
-//                    ClipboardManager clip = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
-//                    clip.setPrimaryClip(ClipData.newPlainText(mSelectionInfo.mSelectionContent, mSelectionInfo.mSelectionContent));
-//                    //选中回调
-//                    if (mSelectListener != null) {
-//                        mSelectListener.onTextSelected(mSelectionInfo.mSelectionContent);
-//                    }
-//                    SelectTextHelper.this.resetSelectionInfo();
-//                    SelectTextHelper.this.hideSelectView();
-//
-//                    //复制后清除缓存
-//                    SelectTextManager.getInstance().setLastSelectText(null);
-//                }
-//            });
-//            contentView.findViewById(R.id.tv_select_all).setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    //全选处理
-//                    hideSelectView();
-//                    selectText(0, mTextView.getText().length());
-//                    isHide = false;
-//
-//                    mStartHandle.show();
-//                    mEndHandle.show();
-//                    mOperateWindow.show();
-//                }
-//            });
+    public void hideOperatePopup() {
+        isHide = true;
+        if (mStartHandle != null) {
+            mStartHandle.dismiss();
         }
-
-        public void show() {
-            //计算显示位置步骤
-            int[] mTempCoors = new int[2];
-            mTextView.getLocationInWindow(mTempCoors);
-            Layout layout = mTextView.getLayout();
-
-
-            //弹框显示的X坐标 = 获取该字符左边的x坐标 + 控件所在x坐标
-            int posX = mTempCoors[0] + (int) layout.getPrimaryHorizontal(mSelectionInfo.mStart);
-            if (posX <= 0) {
-                posX = 16;
-            }
-            //如果超过屏幕宽度
-            if (posX + mWidth > TextLayoutUtil.getScreenWidth(mContext)) {
-                posX = TextLayoutUtil.getScreenWidth(mContext) - mWidth - 16;
-            }
-
-            //获取decorView的显示区域
-            Rect rectangle = new Rect();
-            ((Activity) mContext).getWindow().getDecorView().getWindowVisibleDisplayFrame(rectangle);
-
-            //1. 尝试计算顶部显示
-            int topY = layout.getLineTop(layout.getLineForOffset(mSelectionInfo.mStart));
-            int realTopY = mTempCoors[1] + mTextView.getPaddingTop() + topY;
-            if (realTopY - mHeight - 16 > rectangle.top) {
-                //弹框可以显示在getDecorView()区域内
-
-                int posY = realTopY - mHeight - 16;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    //设置高度
-                    mWindow.setElevation(8f);
-                }
-                mWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, posX, posY);
-                return;
-            }
-
-            //2. 顶部不够显示，尝试计算底部显示
-            int bottomY = layout.getLineBottom(layout.getLineForOffset(mSelectionInfo.mEnd));
-            int realBottomY = mTempCoors[1] + mTextView.getPaddingTop() + bottomY;
-
-            if (realBottomY + mHeight + 16 <= rectangle.bottom) {
-                //未超出显示区域
-
-                int posY = realBottomY + 16;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    //设置高度
-                    mWindow.setElevation(8f);
-                }
-                mWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, posX, posY);
-                return;
-            }
-
-            //3. 中间显示
-            int posY = (realTopY + realBottomY) / 2 + 16;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                //设置高度
-                mWindow.setElevation(8f);
-            }
-            mWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, posX, posY);
+        if (mEndHandle != null) {
+            mEndHandle.dismiss();
         }
+        hideSelectOptionPup();
+    }
 
-        public void dismiss() {
-            mWindow.dismiss();
-        }
-
-        public boolean isShowing() {
-            return mWindow.isShowing();
+    private void hideSelectOptionPup() {
+        if (mOperateWindow != null) {
+            mOperateWindow.dismiss();
         }
     }
+
 
     /**
      * 光标图标控件
@@ -536,11 +370,11 @@ public class SelectTextHelper {
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
                     //触摸结束处理：显示操作框
-                    mOperateWindow.show();
+                    mOperateWindow.show(mTextView, mSelectionInfo);
                     break;
                 case MotionEvent.ACTION_MOVE:
                     //触摸移动：隐藏操作框，记录当前点并更新
-                    mOperateWindow.dismiss();
+                    hideSelectOptionPup();
                     int rawX = (int) event.getRawX();
                     int rawY = (int) event.getRawY();
                     update(rawX, rawY);
@@ -575,7 +409,7 @@ public class SelectTextHelper {
 
             //新旧偏移位不一致：更新信息
             if (offset != oldOffset) {
-                resetSelectionInfo();
+                clearSelectInfo();
                 if (isLeft) {
                     //当前游标为起始游标
                     if (offset > mBeforeDragEnd) {
@@ -588,9 +422,9 @@ public class SelectTextHelper {
                         //当前游标变更为结束游标
                         changeDirection();
                         mBeforeDragStart = mBeforeDragEnd;
-                        selectText(mBeforeDragEnd, offset);
+                        selectInfo(mBeforeDragEnd, offset);
                     } else {
-                        selectText(offset, -1);
+                        selectInfo(offset, -1);
                     }
                     //更新游标位置
                     show(true);
@@ -600,10 +434,10 @@ public class SelectTextHelper {
                         handle.changeDirection();
                         changeDirection();
                         mBeforeDragEnd = mBeforeDragStart;
-                        selectText(offset, mBeforeDragStart);
+                        selectInfo(offset, mBeforeDragStart);
                         handle.show(true);
                     } else {
-                        selectText(mBeforeDragStart, offset);
+                        selectInfo(mBeforeDragStart, offset);
                     }
                     show(true);
                 }
@@ -657,7 +491,6 @@ public class SelectTextHelper {
         int mCursorHandleColor = 0xFF1379D6;
         int mSelectedColor = 0xFFAFE1F4;
         float mCursorHandleSizeInDp = 24;
-        List<SelectOption> selectOptions;
 
         public Builder(TextView textView) {
             mTextView = textView;
@@ -675,11 +508,6 @@ public class SelectTextHelper {
 
         public Builder setSelectedColor(@ColorInt int selectedBgColor) {
             mSelectedColor = selectedBgColor;
-            return this;
-        }
-
-        public Builder setSelectOptions(List<SelectOption> selectOptions) {
-            this.selectOptions = selectOptions;
             return this;
         }
 
