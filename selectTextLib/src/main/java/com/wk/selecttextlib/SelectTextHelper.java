@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.text.Layout;
 import android.text.Spannable;
 import android.text.Spanned;
@@ -21,7 +22,7 @@ import androidx.annotation.NonNull;
 @SuppressLint("ClickableViewAccessibility")
 public class SelectTextHelper {
 
-//    private final static int DEFAULT_SELECTION_LENGTH = 1;
+    //    private final static int DEFAULT_SELECTION_LENGTH = 1;
     private final static int SCROLL_TIME = 100;
 
     private CursorHandle mStartHandle; // 选中起始图标
@@ -43,6 +44,7 @@ public class SelectTextHelper {
     private BackgroundColorSpan mSpan; //选中背景Span
 
     private ViewTreeObserver.OnScrollChangedListener mOnScrollChangedListener;
+    private boolean isHideOpetate = true;
 
     private volatile long lastSelectTime; //记录上一次选择数据时的时间
 
@@ -88,7 +90,16 @@ public class SelectTextHelper {
         mTextView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override
             public void onViewAttachedToWindow(View v) {
-
+                mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
+                    @Override
+                    public void onScrollChanged() {
+                        //滚动监听处理
+                        if (!isHideOpetate) {
+                            showOperatePopup();
+                        }
+                    }
+                };
+                mTextView.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener);
             }
 
             @Override
@@ -97,25 +108,6 @@ public class SelectTextHelper {
                 destroy();
             }
         });
-
-        mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
-            @Override
-            public void onScrollChanged() {
-                //滚动监听处理
-                long diffTime = System.currentTimeMillis() - lastSelectTime;
-                if (diffTime >= SCROLL_TIME) {
-                    clearSelectInfo();
-                    hideOperatePopup();
-
-                    //销毁当前缓存
-                    SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
-                    if (lastSelectText != null && lastSelectText.equals(SelectTextHelper.this)) {
-                        SelectTextManager.getInstance().setLastSelectText(null);
-                    }
-                }
-            }
-        };
-        mTextView.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener);
     }
 
     /**
@@ -244,17 +236,18 @@ public class SelectTextHelper {
      * 显示操作
      */
     public void showOperatePopup() {
+        isHideOpetate = false;
         if (mStartHandle == null) {
             mStartHandle = new CursorHandle(true);
-            mStartHandle.show(false);
+            mStartHandle.firstShow();
         } else {
-            mStartHandle.show(mStartHandle.isShowing());
+            mStartHandle.show();
         }
         if (mEndHandle == null) {
             mEndHandle = new CursorHandle(false);
-            mEndHandle.show(false);
+            mEndHandle.firstShow();
         } else {
-            mEndHandle.show(mEndHandle.isShowing());
+            mEndHandle.show();
         }
         if (mOperateWindow != null) {
             mOperateWindow.show(mTextView, mSelectionInfo, mOperateWindow.isShowing());
@@ -268,6 +261,7 @@ public class SelectTextHelper {
      * 隐藏操作
      */
     public void hideOperatePopup() {
+        isHideOpetate = true;
         if (mStartHandle != null) {
             mStartHandle.dismiss();
         }
@@ -380,7 +374,7 @@ public class SelectTextHelper {
                         //2.结束游标变更为起始坐标
                         CursorHandle handle = getCursorHandle(false);
                         handle.changeDirection();
-                        handle.show(handle.isShowing());
+                        handle.show();
 
                         //3.起始游标变更为结束游标
                         changeDirection();
@@ -396,7 +390,7 @@ public class SelectTextHelper {
                         //2.起始游标变更为结束游标
                         CursorHandle handle = getCursorHandle(true);
                         handle.changeDirection();
-                        handle.show(handle.isShowing());
+                        handle.show();
 
                         //3.结束游标变更为起始坐标
                         changeDirection();
@@ -404,16 +398,11 @@ public class SelectTextHelper {
                         selectInfo(-1, offset);
                     }
                 }
-                show(isShowing());
+                show();
             }
         }
 
-        /**
-         * 统一计算显示位置并显示游标
-         *
-         * @param updateLocation true(更新位置) / false(显示)
-         */
-        private void show(boolean updateLocation) {
+        private void firstShow() {
             int[] mTempCoors = new int[2];
             mTextView.getLocationInWindow(mTempCoors);
             Layout layout = mTextView.getLayout();
@@ -428,10 +417,44 @@ public class SelectTextHelper {
             int realX = mTempCoors[0] + mTextView.getPaddingLeft() + x - (isLeft ? mWidth : 0);
             int realY = mTempCoors[1] + mTextView.getPaddingTop() + y;
 
-            if (updateLocation) {
-                mPopupWindow.update(realX, realY, -1, -1);
+
+            Rect rect = new Rect();
+            mTextView.getGlobalVisibleRect(rect);
+
+            mPopupWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, realX, realY);
+        }
+
+        /**
+         * 统一计算显示位置并显示游标
+         */
+        private void show() {
+            int[] mTempCoors = new int[2];
+            mTextView.getLocationInWindow(mTempCoors);
+            Layout layout = mTextView.getLayout();
+
+            int offset = isLeft ? mSelectionInfo.mStart : mSelectionInfo.mEnd;
+
+            //获取该字符左边的x坐标
+            int x = (int) layout.getPrimaryHorizontal(offset);
+            //先获取所在行数，再获取此行的底部位置
+            int y = layout.getLineBottom(layout.getLineForOffset(offset));
+
+            int realX = mTempCoors[0] + mTextView.getPaddingLeft() + x - (isLeft ? mWidth : 0);
+            int realY = mTempCoors[1] + mTextView.getPaddingTop() + y;
+
+
+            Rect rect = new Rect();
+            mTextView.getGlobalVisibleRect(rect);
+
+            if (realY + mHeight < rect.top || realY > rect.bottom+5) {
+                //超出控件的显示区域：隐藏游标
+                dismiss();
             } else {
-                mPopupWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, realX, realY);
+                if (isShowing()) {
+                    mPopupWindow.update(realX, realY, -1, -1);
+                } else {
+                    mPopupWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, realX, realY);
+                }
             }
         }
 
