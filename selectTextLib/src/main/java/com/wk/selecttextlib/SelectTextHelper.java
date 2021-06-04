@@ -79,9 +79,11 @@ public class SelectTextHelper {
             hideOperatePopup();
 
             SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
-            if (lastSelectText != null && lastSelectText.equals(SelectTextHelper.this)) {
-                SelectTextManager.getInstance().setLastSelectText(null);
+            if (lastSelectText != null && !lastSelectText.equals(SelectTextHelper.this)) {
+                lastSelectText.clearSelectInfo();
+                lastSelectText.hideOperatePopup();
             }
+            SelectTextManager.getInstance().setLastSelectText(null);
         });
         mTextView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override
