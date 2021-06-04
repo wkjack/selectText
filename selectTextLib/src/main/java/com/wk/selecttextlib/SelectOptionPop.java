@@ -127,10 +127,10 @@ public class SelectOptionPop {
         int bottomY = layout.getLineBottom(layout.getLineForOffset(mSelectionInfo.mEnd));
         int realBottomY = mTempCoors[1] + mTextView.getPaddingTop() + bottomY;
 
-        if (realBottomY - mHeight - 16 <= rectangle.bottom) {
+        if (realBottomY - mHeight - 50 <= rectangle.bottom) {
             //未超出显示区域
 
-            int posY = realBottomY - mHeight - 16;
+            int posY = realBottomY - mHeight - 50;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 //设置高度
                 mWindow.setElevation(8f);
