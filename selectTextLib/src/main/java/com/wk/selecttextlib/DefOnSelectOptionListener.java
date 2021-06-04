@@ -11,7 +11,7 @@ import java.util.List;
 
 public class DefOnSelectOptionListener implements OnSelectOptionListener {
 
-    private SelectTextHelper selectTextHelper;
+    protected SelectTextHelper selectTextHelper;
 
     public DefOnSelectOptionListener(@NonNull SelectTextHelper selectTextHelper) {
         this.selectTextHelper = selectTextHelper;

@@ -51,6 +51,8 @@ public class MainActivity extends AppCompatActivity {
                 super.onSelectOption(selectionInfo, option);
                 if (option.getType() == SelectOption.TYPE_CUSTOM) {
                     Log.e("自定义选项：", option.toString());
+                    selectTextHelper.clearSelectInfo();
+                    selectTextHelper.hideOperatePopup();
                 }
             }
         });
