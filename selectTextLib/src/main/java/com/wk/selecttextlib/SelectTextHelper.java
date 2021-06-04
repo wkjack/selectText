@@ -21,7 +21,8 @@ import androidx.annotation.NonNull;
 @SuppressLint("ClickableViewAccessibility")
 public class SelectTextHelper {
 
-    private final static int DEFAULT_SELECTION_LENGTH = 1;
+//    private final static int DEFAULT_SELECTION_LENGTH = 1;
+    private final static int SCROLL_TIME = 100;
 
     private CursorHandle mStartHandle; // 选中起始图标
     private CursorHandle mEndHandle; // 选中结束图标
@@ -43,7 +44,7 @@ public class SelectTextHelper {
 
     private ViewTreeObserver.OnScrollChangedListener mOnScrollChangedListener;
 
-    private final String TAG = "SelectTag";
+    private volatile long lastSelectTime; //记录上一次选择数据时的时间
 
     public SelectTextHelper(Builder builder) {
         mTextView = builder.mTextView;
@@ -99,13 +100,16 @@ public class SelectTextHelper {
             @Override
             public void onScrollChanged() {
                 //滚动监听处理
-                clearSelectInfo();
-                hideOperatePopup();
+                long diffTime = System.currentTimeMillis() - lastSelectTime;
+                if (diffTime >= SCROLL_TIME) {
+                    clearSelectInfo();
+                    hideOperatePopup();
 
-                //销毁当前缓存
-                SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
-                if (lastSelectText != null && lastSelectText.equals(SelectTextHelper.this)) {
-                    SelectTextManager.getInstance().setLastSelectText(null);
+                    //销毁当前缓存
+                    SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
+                    if (lastSelectText != null && lastSelectText.equals(SelectTextHelper.this)) {
+                        SelectTextManager.getInstance().setLastSelectText(null);
+                    }
                 }
             }
         };
@@ -119,10 +123,13 @@ public class SelectTextHelper {
      * @param y 文本控件的内部y坐标点
      */
     private void showSelectView(int x, int y) {
-        //获取文本控件中最接近坐标的字符的索引位置，作为选中的起始位置
-        int startOffset = TextLayoutUtil.getPreciseOffset(mTextView, x, y);
-        //结束位置 = 起始位 + 1
-        int endOffset = startOffset + DEFAULT_SELECTION_LENGTH;
+//        //获取文本控件中最接近坐标的字符的索引位置，作为选中的起始位置
+//        int startOffset = TextLayoutUtil.getPreciseOffset(mTextView, x, y);
+//        //结束位置 = 起始位 + 1
+//        int endOffset = startOffset + DEFAULT_SELECTION_LENGTH;
+        int startOffset = 0;
+        int endOffset = mTextView.getText().length();
+
         if (mTextView.getText() instanceof Spannable) {
             mSpannable = (Spannable) mTextView.getText();
         }
@@ -139,6 +146,7 @@ public class SelectTextHelper {
         selectInfo(startOffset, endOffset);
         showOperatePopup();
 
+        lastSelectTime = System.currentTimeMillis();
         //确保只会有一个处于选择复制中
         SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
         if (lastSelectText != null && !lastSelectText.equals(this)) {
@@ -194,6 +202,7 @@ public class SelectTextHelper {
             mSpannable.removeSpan(mSpan);
             mSpan = null;
         }
+        lastSelectTime = -1;
     }
 
     /**
@@ -327,6 +336,7 @@ public class SelectTextHelper {
                     int rawX = (int) event.getRawX();
                     int rawY = (int) event.getRawY();
                     update(rawX, rawY);
+                    lastSelectTime = System.currentTimeMillis();
                     break;
             }
             return true;
