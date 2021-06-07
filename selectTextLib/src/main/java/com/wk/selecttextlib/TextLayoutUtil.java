@@ -10,6 +10,10 @@ public class TextLayoutUtil {
         return context.getResources().getDisplayMetrics().widthPixels;
     }
 
+    public static int getScreenHeight(Context context) {
+        return context.getResources().getDisplayMetrics().heightPixels;
+    }
+
     /**
      * 获取文本控件中与指定坐标距离最近字符在文本内容中的索引
      *
