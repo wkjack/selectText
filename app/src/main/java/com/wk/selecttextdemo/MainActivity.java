@@ -8,9 +8,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.wk.selecttextlib.DefOnSelectOptionListener;
+import com.wk.selecttextlib.selectText.DefOnSelectOptionListener;
 import com.wk.selecttextlib.SelectOption;
-import com.wk.selecttextlib.SelectTextHelper;
+import com.wk.selecttextlib.selectText.SelectTextHelper;
 import com.wk.selecttextlib.SelectionInfo;
 
 import java.util.List;
@@ -51,8 +51,7 @@ public class MainActivity extends AppCompatActivity {
                 super.onSelectOption(selectionInfo, option);
                 if (option.getType() == SelectOption.TYPE_CUSTOM) {
                     Log.e("自定义选项：", option.toString());
-                    selectTextHelper.clearSelectInfo();
-                    selectTextHelper.hideOperatePopup();
+                    selectTextHelper.clearOperate();
                 }
             }
         });

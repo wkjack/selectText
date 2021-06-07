@@ -1,6 +1,9 @@
-package com.wk.selecttextlib;
+package com.wk.selecttextlib.selectText;
 
 import androidx.annotation.NonNull;
+
+import com.wk.selecttextlib.SelectOption;
+import com.wk.selecttextlib.SelectionInfo;
 
 import java.util.List;
 

@@ -1,10 +1,15 @@
-package com.wk.selecttextlib;
+package com.wk.selecttextlib.selectText;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+
+import com.wk.selecttextlib.SelectOption;
+import com.wk.selecttextlib.SelectionInfo;
+import com.wk.selecttextlib.selectText.OnSelectOptionListener;
+import com.wk.selecttextlib.selectText.SelectTextHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +41,7 @@ public class DefOnSelectOptionListener implements OnSelectOptionListener {
             ClipboardManager clip = (ClipboardManager) selectTextHelper.getTextView().getContext().getSystemService(Context.CLIPBOARD_SERVICE);
             clip.setPrimaryClip(ClipData.newPlainText(selectionInfo.mSelectionContent, selectionInfo.mSelectionContent));
 
-            selectTextHelper.clearSelectInfo();
-            selectTextHelper.hideOperatePopup();
+            selectTextHelper.clearOperate();
             return;
         }
 

@@ -5,11 +5,14 @@ import android.content.Context;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
+import com.wk.selecttextlib.LastSelectListener;
+import com.wk.selecttextlib.LastSelectManager;
+
 /**
  * 长按选择帮助类，提供指定控件的选择弹框处理
  */
 @SuppressLint("ClickableViewAccessibility")
-public class SelectHelper {
+public class SelectHelper implements LastSelectListener {
 
     //    private final static int DEFAULT_SELECTION_LENGTH = 1;
 
@@ -46,13 +49,13 @@ public class SelectHelper {
         });
 
         mView.setOnClickListener(v -> {
-            hideOperatePopup();
+            clearOperate();
 
-            SelectHelper lastSelect = SelectManager.getInstance().getLastSelect();
+            LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
             if (lastSelect != null && !lastSelect.equals(SelectHelper.this)) {
-                lastSelect.hideOperatePopup();
+                lastSelect.clearOperate();
             }
-            SelectManager.getInstance().setLastSelect(null);
+            LastSelectManager.getInstance().setLastSelect(null);
         });
         mView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override
@@ -90,11 +93,11 @@ public class SelectHelper {
     private void showSelectView(int x, int y) {
         showOperatePopup();
         //确保只会有一个处于选择复制中
-        SelectHelper lastSelect = SelectManager.getInstance().getLastSelect();
+        LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
         if (lastSelect != null && !lastSelect.equals(this)) {
-            lastSelect.hideOperatePopup();
+            lastSelect.clearOperate();
         }
-        SelectManager.getInstance().setLastSelect(this);
+        LastSelectManager.getInstance().setLastSelect(this);
     }
 
     /**
@@ -102,13 +105,13 @@ public class SelectHelper {
      */
     public void destroy() {
         mView.getViewTreeObserver().removeOnScrollChangedListener(mOnScrollChangedListener);
-        hideOperatePopup();
+        clearOperate();
         mOperateWindow = null;
 
         //记录的缓存为自身时才清除缓存
-        SelectHelper lastSelect = SelectManager.getInstance().getLastSelect();
+        LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
         if (lastSelect != null && lastSelect.equals(SelectHelper.this)) {
-            SelectManager.getInstance().setLastSelect(null);
+            LastSelectManager.getInstance().setLastSelect(null);
         }
     }
 
@@ -122,7 +125,10 @@ public class SelectHelper {
         return mView;
     }
 
-
+    @Override
+    public void clearOperate() {
+        hideOperatePopup();
+    }
 
     /**
      * 显示操作

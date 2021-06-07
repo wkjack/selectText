@@ -1,4 +1,4 @@
-package com.wk.selecttextlib;
+package com.wk.selecttextlib.selectText;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -19,8 +19,13 @@ import android.widget.TextView;
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 
+import com.wk.selecttextlib.LastSelectListener;
+import com.wk.selecttextlib.LastSelectManager;
+import com.wk.selecttextlib.SelectionInfo;
+import com.wk.selecttextlib.TextLayoutUtil;
+
 @SuppressLint("ClickableViewAccessibility")
-public class SelectTextHelper {
+public class SelectTextHelper implements LastSelectListener {
 
     //    private final static int DEFAULT_SELECTION_LENGTH = 1;
     private final static int SCROLL_TIME = 100;
@@ -77,15 +82,13 @@ public class SelectTextHelper {
 
         mTextView.setOnClickListener(v -> {
             //重置选中信息，隐藏选中操作
-            clearSelectInfo();
-            hideOperatePopup();
+            clearOperate();
 
-            SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
+            LastSelectListener lastSelectText = LastSelectManager.getInstance().getLastSelect();
             if (lastSelectText != null && !lastSelectText.equals(SelectTextHelper.this)) {
-                lastSelectText.clearSelectInfo();
-                lastSelectText.hideOperatePopup();
+                lastSelectText.clearOperate();
             }
-            SelectTextManager.getInstance().setLastSelectText(null);
+            LastSelectManager.getInstance().setLastSelect(null);
         });
         mTextView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override
@@ -130,9 +133,9 @@ public class SelectTextHelper {
         //确保文本内容样式可设置且选中索引在文本内容范围内
         if (mSpannable == null || startOffset >= mTextView.getText().length()) {
             hideOperatePopup();
-            SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
+            LastSelectListener lastSelectText = LastSelectManager.getInstance().getLastSelect();
             if (lastSelectText != null && lastSelectText.equals(SelectTextHelper.this)) {
-                SelectTextManager.getInstance().setLastSelectText(null);
+                LastSelectManager.getInstance().setLastSelect(null);
             }
             return;
         }
@@ -142,12 +145,11 @@ public class SelectTextHelper {
 
         lastSelectTime = System.currentTimeMillis();
         //确保只会有一个处于选择复制中
-        SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
+        LastSelectListener lastSelectText = LastSelectManager.getInstance().getLastSelect();
         if (lastSelectText != null && !lastSelectText.equals(this)) {
-            lastSelectText.clearSelectInfo();
-            lastSelectText.hideOperatePopup();
+            lastSelectText.clearOperate();
         }
-        SelectTextManager.getInstance().setLastSelectText(this);
+        LastSelectManager.getInstance().setLastSelect(this);
     }
 
     public void setSelectOptionListener(@NonNull OnSelectOptionListener selectOptionListener) {
@@ -159,16 +161,15 @@ public class SelectTextHelper {
      */
     public void destroy() {
         mTextView.getViewTreeObserver().removeOnScrollChangedListener(mOnScrollChangedListener);
-        clearSelectInfo();
-        hideOperatePopup();
+        clearOperate();
         mStartHandle = null;
         mEndHandle = null;
         mOperateWindow = null;
 
         //记录的缓存为自身时才清除缓存
-        SelectTextHelper lastSelectText = SelectTextManager.getInstance().getLastSelectText();
+        LastSelectListener lastSelectText = LastSelectManager.getInstance().getLastSelect();
         if (lastSelectText != null && lastSelectText.equals(SelectTextHelper.this)) {
-            SelectTextManager.getInstance().setLastSelectText(null);
+            LastSelectManager.getInstance().setLastSelect(null);
         }
     }
 
@@ -186,7 +187,13 @@ public class SelectTextHelper {
         return mSelectionInfo;
     }
 
-    public void clearSelectInfo() {
+    @Override
+    public void clearOperate() {
+        clearSelectInfo();
+        hideOperatePopup();
+    }
+
+    private void clearSelectInfo() {
         //清空选中内容、样式
         mSelectionInfo.mSelectionContent = null;
         mSelectionInfo.mStart = -1;
@@ -260,7 +267,7 @@ public class SelectTextHelper {
     /**
      * 隐藏操作
      */
-    public void hideOperatePopup() {
+    private void hideOperatePopup() {
         isHideOpetate = true;
         if (mStartHandle != null) {
             mStartHandle.dismiss();

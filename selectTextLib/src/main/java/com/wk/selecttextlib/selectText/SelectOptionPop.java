@@ -1,4 +1,4 @@
-package com.wk.selecttextlib;
+package com.wk.selecttextlib.selectText;
 
 import android.app.Activity;
 import android.content.Context;
@@ -13,6 +13,12 @@ import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
+
+import com.wk.selecttextlib.R;
+import com.wk.selecttextlib.SelectOption;
+import com.wk.selecttextlib.SelectOptionAdapter;
+import com.wk.selecttextlib.SelectionInfo;
+import com.wk.selecttextlib.TextLayoutUtil;
 
 import java.util.List;
 
