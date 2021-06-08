@@ -88,27 +88,46 @@ public class SelectOptionPop {
         if (mContext == null) {
             return;
         }
-
-
-        //计算显示位置步骤
         int[] mTempCoors = new int[2];
         mTextView.getLocationInWindow(mTempCoors);
-        Layout layout = mTextView.getLayout();
 
+        Rect viewRect = new Rect();
+        mTextView.getGlobalVisibleRect(viewRect);
 
-        //弹框显示的X坐标 = 获取该字符左边的x坐标 + 控件所在x坐标
-        int posX = mTempCoors[0] + (int) layout.getPrimaryHorizontal(mSelectionInfo.mStart);
-        if (posX <= 0) {
-            posX = 16;
+        if (mTempCoors[0] != viewRect.left && mTempCoors[1] != viewRect.top) {
+            //经过实验，此种情况为控件已无显示区域
+
+            int posX = 0;
+            int posY = -mHeight - 16;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                //设置高度
+                mWindow.setElevation(8f);
+            }
+            if (updateLocation) {
+                mWindow.update(posX, posY, -1, -1);
+            } else {
+                mWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, posX, posY);
+            }
+            return;
         }
-        //如果超过屏幕宽度
-        if (posX + mWidth > TextLayoutUtil.getScreenWidth(mContext)) {
-            posX = TextLayoutUtil.getScreenWidth(mContext) - mWidth - 16;
+
+        int posX;
+        if (viewRect.left + mWidth <= viewRect.right) {
+            //弹框可现实在控件内部
+            posX = (viewRect.left + viewRect.right - mWidth) / 2;
+
+        } else if (viewRect.left + mWidth < TextLayoutUtil.getScreenWidth(mContext)) {
+            //弹框超出控件范围，但未超出屏幕
+            posX = viewRect.left;
+        } else {
+            posX = TextLayoutUtil.getScreenWidth(mContext) - mWidth;
         }
 
         //获取decorView的显示区域
         Rect rectangle = new Rect();
         ((Activity) mContext).getWindow().getDecorView().getWindowVisibleDisplayFrame(rectangle);
+
+        Layout layout = mTextView.getLayout();
 
         //1. 尝试计算顶部显示
         int topY = layout.getLineTop(layout.getLineForOffset(mSelectionInfo.mStart));
@@ -133,20 +152,24 @@ public class SelectOptionPop {
         int bottomY = layout.getLineBottom(layout.getLineForOffset(mSelectionInfo.mEnd));
         int realBottomY = mTempCoors[1] + mTextView.getPaddingTop() + bottomY;
 
-        if (realBottomY - mHeight - 50 <= rectangle.bottom) {
-            //未超出显示区域
+        int cursorHeight = selectTextHelper.getmCursorHandleSize();
 
-            int posY = realBottomY - mHeight - 50;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                //设置高度
-                mWindow.setElevation(8f);
+        if (realBottomY + cursorHeight + mHeight + 16 <= TextLayoutUtil.getScreenHeight(mContext)) {
+            //未超出显示区域
+            if (realBottomY > 0) {
+                //说明当前控件内容完全被遮挡，没有显示内容
+                int posY = realBottomY + cursorHeight + 16;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    //设置高度
+                    mWindow.setElevation(8f);
+                }
+                if (updateLocation) {
+                    mWindow.update(posX, posY, -1, -1);
+                } else {
+                    mWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, posX, posY);
+                }
+                return;
             }
-            if (updateLocation) {
-                mWindow.update(posX, posY, -1, -1);
-            } else {
-                mWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, posX, posY);
-            }
-            return;
         }
 
         //3. 中间显示

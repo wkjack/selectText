@@ -2,6 +2,7 @@ package com.wk.selecttextlib.select;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
@@ -38,6 +39,7 @@ public class SelectHelper implements LastSelectListener {
         mView.setOnLongClickListener(v -> {
             //长按显示选中布局
 //            showSelectView(mTouchX, mTouchY);
+            Log.e("列表", "选中:" + SelectHelper.this);
             showSelectView();
             return true;
         });
@@ -49,28 +51,10 @@ public class SelectHelper implements LastSelectListener {
             return false;
         });
 
-        mView.setOnClickListener(v -> {
-            clearOperate();
-
-            LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
-            if (lastSelect != null && !lastSelect.equals(SelectHelper.this)) {
-                lastSelect.clearOperate();
-            }
-            LastSelectManager.getInstance().setLastSelect(null);
-        });
         mView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override
             public void onViewAttachedToWindow(View v) {
-                mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
-                    @Override
-                    public void onScrollChanged() {
-                        //滚动监听处理
-                        if (!isHideOpetate) {
-                            showOperatePopup();
-                        }
-                    }
-                };
-                mView.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener);
+
             }
 
             @Override
@@ -79,6 +63,16 @@ public class SelectHelper implements LastSelectListener {
                 destroy();
             }
         });
+        mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
+            @Override
+            public void onScrollChanged() {
+                //滚动监听处理
+                if (!isHideOpetate) {
+                    showOperatePopup();
+                }
+            }
+        };
+        mView.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener);
     }
 
     public void setSelectListener(OnSelectListener selectListener) {
