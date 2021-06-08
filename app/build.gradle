@@ -28,7 +28,7 @@ android {
 
 dependencies {
     implementation project(":selectTextLib")
-//    implementation 'com.github.wkjack:selectText:1.1.3'
+//    implementation 'com.github.wkjack:selectText:1.1.4'
 
     implementation 'androidx.appcompat:appcompat:1.3.0'
     implementation 'com.google.android.material:material:1.3.0'
