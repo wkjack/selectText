@@ -37,7 +37,8 @@ public class SelectHelper implements LastSelectListener {
     private void init() {
         mView.setOnLongClickListener(v -> {
             //长按显示选中布局
-            showSelectView(mTouchX, mTouchY);
+//            showSelectView(mTouchX, mTouchY);
+            showSelectView();
             return true;
         });
 
@@ -86,11 +87,8 @@ public class SelectHelper implements LastSelectListener {
 
     /**
      * 显示选中控件
-     *
-     * @param x 文本控件的内部x坐标点
-     * @param y 文本控件的内部y坐标点
      */
-    private void showSelectView(int x, int y) {
+    private void showSelectView() {
         showOperatePopup();
         //确保只会有一个处于选择复制中
         LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
@@ -103,7 +101,7 @@ public class SelectHelper implements LastSelectListener {
     /**
      * 销毁
      */
-    public void destroy() {
+    private void destroy() {
         mView.getViewTreeObserver().removeOnScrollChangedListener(mOnScrollChangedListener);
         clearOperate();
         mOperateWindow = null;
@@ -131,9 +129,16 @@ public class SelectHelper implements LastSelectListener {
     }
 
     /**
+     * 外部主动调用的长按事件
+     */
+    public final void longClick() {
+        showSelectView();
+    }
+
+    /**
      * 显示操作
      */
-    public void showOperatePopup() {
+    private void showOperatePopup() {
         isHideOpetate = false;
 
         if (mOperateWindow != null) {
@@ -147,7 +152,7 @@ public class SelectHelper implements LastSelectListener {
     /**
      * 隐藏操作
      */
-    public void hideOperatePopup() {
+    private void hideOperatePopup() {
         isHideOpetate = true;
         hideSelectOptionPup();
     }
