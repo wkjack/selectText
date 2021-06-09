@@ -2,12 +2,12 @@ package com.wk.selecttextlib.select;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewTreeObserver;
 
 import com.wk.selecttextlib.LastSelectListener;
 import com.wk.selecttextlib.LastSelectManager;
+import com.wk.selecttextlib.util.ClickUtil;
 
 /**
  * 长按选择帮助类，提供指定控件的选择弹框处理
@@ -15,19 +15,18 @@ import com.wk.selecttextlib.LastSelectManager;
 @SuppressLint("ClickableViewAccessibility")
 public class SelectHelper implements LastSelectListener {
 
-    //    private final static int DEFAULT_SELECTION_LENGTH = 1;
-
     private SelectPop mOperateWindow; //操作弹框
 
     private final Context mContext; //上下文
     private final View mView; //控件
     private OnSelectListener selectListener;
 
-    private int mTouchX; //触点坐标X
-    private int mTouchY; //触点坐标Y
+    private View.OnClickListener originalClickListener; //控件原有的点击事件
 
-    private ViewTreeObserver.OnScrollChangedListener mOnScrollChangedListener;
-    private boolean isHideOpetate = true;
+    private boolean isTriggerLongClick = false; //是否触发长按点击事件
+    private boolean isTouchDown = false; //是否触发ACTION_DOWN
+    private MotionEvent downEvent; //记录ACTION_DOWN的event
+
 
     public SelectHelper(SelectHelper.Builder builder) {
         mView = builder.view;
@@ -36,19 +35,65 @@ public class SelectHelper implements LastSelectListener {
     }
 
     private void init() {
+        originalClickListener = ClickUtil.getViewClickListener(mView);
+
         mView.setOnLongClickListener(v -> {
-            //长按显示选中布局
-//            showSelectView(mTouchX, mTouchY);
-            Log.e("列表", "选中:" + SelectHelper.this);
+            isTriggerLongClick = true;
             showSelectView();
             return true;
         });
 
         mView.setOnTouchListener((v, event) -> {
             //记录触摸点坐标
-            mTouchX = (int) event.getX();
-            mTouchY = (int) event.getY();
+            int action = event.getAction();
+            switch (action) {
+                case MotionEvent.ACTION_DOWN:
+                    isTriggerLongClick = false;
+                    isTouchDown = true;
+                    downEvent = event;
+                    break;
+
+                case MotionEvent.ACTION_MOVE:
+                    //应对按下后触发点击事件后继续滑动，此时隐藏操作
+                    if (isTriggerLongClick) {
+                        //已触发点击事件
+                    }
+                    break;
+
+                case MotionEvent.ACTION_CANCEL:
+                    //应对按下后触发点击事件后继续滑动,松开时已划出控件区域
+                    downEvent = null;
+                    if (isTriggerLongClick) {
+                        //已触发点击事件
+                        clearOperate();
+                    }
+                    break;
+
+                case MotionEvent.ACTION_UP:
+                    //应对按下后触发点击事件后继续滑动直到松开，此时显示操作
+                    isTouchDown = false;
+                    downEvent = null;
+                    if (isTriggerLongClick) {
+                        //已触发点击事件
+                        showOperatePopup();
+                    }
+                    break;
+            }
             return false;
+        });
+
+        mView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                LastSelectListener lastSelectText = LastSelectManager.getInstance().getLastSelect();
+                if (lastSelectText != null) {
+                    lastSelectText.clearOperate();
+                    LastSelectManager.getInstance().setLastSelect(null);
+                }
+                if (originalClickListener != null) {
+                    originalClickListener.onClick(v);
+                }
+            }
         });
 
         mView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
@@ -63,16 +108,6 @@ public class SelectHelper implements LastSelectListener {
                 destroy();
             }
         });
-        mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
-            @Override
-            public void onScrollChanged() {
-                //滚动监听处理
-                if (!isHideOpetate) {
-                    showOperatePopup();
-                }
-            }
-        };
-        mView.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener);
     }
 
     public void setSelectListener(OnSelectListener selectListener) {
@@ -96,7 +131,6 @@ public class SelectHelper implements LastSelectListener {
      * 销毁
      */
     private void destroy() {
-        mView.getViewTreeObserver().removeOnScrollChangedListener(mOnScrollChangedListener);
         clearOperate();
         mOperateWindow = null;
 
@@ -122,19 +156,40 @@ public class SelectHelper implements LastSelectListener {
         hideOperatePopup();
     }
 
-    /**
-     * 外部主动调用的长按事件
-     */
-    public final void longClick() {
-        showSelectView();
+    @Override
+    public boolean isOnTouchDown() {
+        return isTouchDown;
+    }
+
+    @Override
+    public void onTouchDownOutside(MotionEvent motionEvent) {
+        if (!motionEvent.equals(downEvent)) {
+            isTouchDown = false;
+        }
+    }
+
+    @Override
+    public void onScrollFromOther() {
+        isTouchDown = false;
+        clearOperate();
+    }
+
+    @Override
+    public void onScroll() {
+        if (isTouchDown) {
+            showOperatePopup();
+        }
+    }
+
+    @Override
+    public void onFling() {
+        isTouchDown = false;
     }
 
     /**
      * 显示操作
      */
     private void showOperatePopup() {
-        isHideOpetate = false;
-
         if (mOperateWindow != null) {
             mOperateWindow.show(mView, mOperateWindow.isShowing());
         } else {
@@ -147,7 +202,6 @@ public class SelectHelper implements LastSelectListener {
      * 隐藏操作
      */
     private void hideOperatePopup() {
-        isHideOpetate = true;
         hideSelectOptionPup();
     }
 

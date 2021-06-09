@@ -9,11 +9,9 @@ import android.text.Layout;
 import android.text.Spannable;
 import android.text.Spanned;
 import android.text.style.BackgroundColorSpan;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
@@ -22,15 +20,13 @@ import androidx.annotation.NonNull;
 
 import com.wk.selecttextlib.LastSelectListener;
 import com.wk.selecttextlib.LastSelectManager;
+import com.wk.selecttextlib.R;
 import com.wk.selecttextlib.SelectionInfo;
 import com.wk.selecttextlib.TextLayoutUtil;
 import com.wk.selecttextlib.util.ClickUtil;
 
 @SuppressLint("ClickableViewAccessibility")
 public class SelectTextHelper implements LastSelectListener {
-
-    //    private final static int DEFAULT_SELECTION_LENGTH = 1;
-    private final static int SCROLL_TIME = 100;
 
     private CursorHandle mStartHandle; // 选中起始图标
     private CursorHandle mEndHandle; // 选中结束图标
@@ -45,16 +41,15 @@ public class SelectTextHelper implements LastSelectListener {
     private final int mCursorHandleSize; //选中图标尺寸
 
 
-    private int mTouchX; //触点坐标X
-    private int mTouchY; //触点坐标Y
     private Spannable mSpannable; //文本内容
     private BackgroundColorSpan mSpan; //选中背景Span
 
-    private ViewTreeObserver.OnScrollChangedListener mOnScrollChangedListener;
-    private boolean isHideOpetate = true;
-
-    private volatile long lastSelectTime; //记录上一次选择数据时的时间
     private View.OnClickListener originalClickListener; //控件原有的点击事件
+
+    private boolean isTriggerLongClick = false; //是否触发长按点击事件
+    private boolean isTouchDown = false; //是否触发ACTION_DOWN
+    private MotionEvent downEvent; //记录ACTION_DOWN的event
+
 
     public SelectTextHelper(Builder builder) {
         mTextView = builder.mTextView;
@@ -64,6 +59,8 @@ public class SelectTextHelper implements LastSelectListener {
         mCursorHandleSize = TextLayoutUtil.dp2px(mContext, builder.mCursorHandleSizeInDp);
 
         selectOptionListener = new DefOnSelectOptionListener(this);
+
+        mTextView.setTag(R.id.tag_select_help, this);
         init();
     }
 
@@ -73,15 +70,47 @@ public class SelectTextHelper implements LastSelectListener {
         originalClickListener = ClickUtil.getViewClickListener(mTextView);
         mTextView.setOnLongClickListener(v -> {
             //长按显示选中布局
-            Log.e("列表", "选中:" + SelectTextHelper.this);
-            showSelectView(mTouchX, mTouchY);
+            isTriggerLongClick = true;
+            showSelectView(0, mTextView.getText().length());
             return true;
         });
 
         mTextView.setOnTouchListener((v, event) -> {
             //记录触摸点坐标
-            mTouchX = (int) event.getX();
-            mTouchY = (int) event.getY();
+            int action = event.getAction();
+            switch (action) {
+                case MotionEvent.ACTION_DOWN:
+                    isTriggerLongClick = false;
+                    isTouchDown = true;
+                    downEvent = event;
+                    break;
+
+                case MotionEvent.ACTION_MOVE:
+                    //应对按下后触发点击事件后继续滑动，此时隐藏操作
+                    if (isTriggerLongClick) {
+                        //已触发点击事件
+                    }
+                    break;
+
+                case MotionEvent.ACTION_CANCEL:
+                    //应对按下后触发点击事件后继续滑动,松开时已划出控件区域
+                    downEvent = null;
+                    if (isTriggerLongClick) {
+                        //已触发点击事件
+                        clearOperate();
+                    }
+                    break;
+
+                case MotionEvent.ACTION_UP:
+                    //应对按下后触发点击事件后继续滑动直到松开，此时显示操作
+                    isTouchDown = false;
+                    downEvent = null;
+                    if (isTriggerLongClick) {
+                        //已触发点击事件
+                        showOperatePopup();
+                    }
+                    break;
+            }
             return false;
         });
 
@@ -117,38 +146,20 @@ public class SelectTextHelper implements LastSelectListener {
                 destroy();
             }
         });
-        mOnScrollChangedListener = new ViewTreeObserver.OnScrollChangedListener() {
-            @Override
-            public void onScrollChanged() {
-                //滚动监听处理
-                if (!isHideOpetate) {
-                    selectInfo(-1, -1);
-                    showOperatePopup();
-                }
-            }
-        };
-        mTextView.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener);
     }
 
     /**
      * 显示选中控件
      *
-     * @param x 文本控件的内部x坐标点
-     * @param y 文本控件的内部y坐标点
+     * @param start 文本控件的内部x坐标点
+     * @param end   文本控件的内部y坐标点
      */
-    private void showSelectView(int x, int y) {
-//        //获取文本控件中最接近坐标的字符的索引位置，作为选中的起始位置
-//        int startOffset = TextLayoutUtil.getPreciseOffset(mTextView, x, y);
-//        //结束位置 = 起始位 + 1
-//        int endOffset = startOffset + DEFAULT_SELECTION_LENGTH;
-        int startOffset = 0;
-        int endOffset = mTextView.getText().length();
-
+    private void showSelectView(int start, int end) {
         if (mTextView.getText() instanceof Spannable) {
             mSpannable = (Spannable) mTextView.getText();
         }
         //确保文本内容样式可设置且选中索引在文本内容范围内
-        if (mSpannable == null || startOffset >= mTextView.getText().length()) {
+        if (mSpannable == null || start >= mTextView.getText().length()) {
             hideOperatePopup();
             LastSelectListener lastSelectText = LastSelectManager.getInstance().getLastSelect();
             if (lastSelectText != null && lastSelectText.equals(SelectTextHelper.this)) {
@@ -157,10 +168,9 @@ public class SelectTextHelper implements LastSelectListener {
             return;
         }
 
-        selectInfo(startOffset, endOffset);
+        selectInfo(start, end);
         showOperatePopup();
 
-        lastSelectTime = System.currentTimeMillis();
         //确保只会有一个处于选择复制中
         LastSelectListener lastSelectText = LastSelectManager.getInstance().getLastSelect();
         if (lastSelectText != null && !lastSelectText.equals(this)) {
@@ -177,7 +187,6 @@ public class SelectTextHelper implements LastSelectListener {
      * 销毁
      */
     public void destroy() {
-        mTextView.getViewTreeObserver().removeOnScrollChangedListener(mOnScrollChangedListener);
         clearOperate();
         mStartHandle = null;
         mEndHandle = null;
@@ -209,6 +218,36 @@ public class SelectTextHelper implements LastSelectListener {
     }
 
     @Override
+    public boolean isOnTouchDown() {
+        return isTouchDown;
+    }
+
+    @Override
+    public void onTouchDownOutside(MotionEvent motionEvent) {
+        if (!motionEvent.equals(downEvent)) {
+            isTouchDown = false;
+        }
+    }
+
+    @Override
+    public void onScrollFromOther() {
+        isTouchDown = false;
+        clearOperate();
+    }
+
+    @Override
+    public void onScroll() {
+        if (isTouchDown) {
+            showOperatePopup();
+        }
+    }
+
+    @Override
+    public void onFling() {
+        isTouchDown = false;
+    }
+
+    @Override
     public void clearOperate() {
         clearSelectInfo();
         hideOperatePopup();
@@ -224,7 +263,6 @@ public class SelectTextHelper implements LastSelectListener {
             mSpannable.removeSpan(mSpan);
             mSpan = null;
         }
-        lastSelectTime = -1;
     }
 
     /**
@@ -249,14 +287,18 @@ public class SelectTextHelper implements LastSelectListener {
             mSelectionInfo.mEnd = temp;
         }
 
-        if (mSpannable != null) {
-            if (mSpan == null) {
-                mSpan = new BackgroundColorSpan(mSelectedColor);
+        try {
+            if (mSpannable != null) {
+                if (mSpan == null) {
+                    mSpan = new BackgroundColorSpan(mSelectedColor);
+                }
+                //更新选中内容
+                mSelectionInfo.mSelectionContent = mSpannable.subSequence(mSelectionInfo.mStart, mSelectionInfo.mEnd).toString();
+                //设置选中样式
+                mSpannable.setSpan(mSpan, mSelectionInfo.mStart, mSelectionInfo.mEnd, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             }
-            //更新选中内容
-            mSelectionInfo.mSelectionContent = mSpannable.subSequence(mSelectionInfo.mStart, mSelectionInfo.mEnd).toString();
-            //设置选中样式
-            mSpannable.setSpan(mSpan, mSelectionInfo.mStart, mSelectionInfo.mEnd, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -264,7 +306,6 @@ public class SelectTextHelper implements LastSelectListener {
      * 显示操作
      */
     public void showOperatePopup() {
-        isHideOpetate = false;
         if (mStartHandle == null) {
             mStartHandle = new CursorHandle(true);
             mStartHandle.firstShow();
@@ -289,7 +330,6 @@ public class SelectTextHelper implements LastSelectListener {
      * 隐藏操作
      */
     private void hideOperatePopup() {
-        isHideOpetate = true;
         if (mStartHandle != null) {
             mStartHandle.dismiss();
         }
@@ -304,7 +344,6 @@ public class SelectTextHelper implements LastSelectListener {
             mOperateWindow.dismiss();
         }
     }
-
 
     /**
      * 光标图标控件
@@ -360,7 +399,6 @@ public class SelectTextHelper implements LastSelectListener {
                     int rawX = (int) event.getRawX();
                     int rawY = (int) event.getRawY();
                     update(rawX, rawY);
-                    lastSelectTime = System.currentTimeMillis();
                     break;
             }
             return true;
