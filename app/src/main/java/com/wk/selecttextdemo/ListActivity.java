@@ -54,9 +54,48 @@ public class ListActivity extends AppCompatActivity {
                 LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
                 if (lastSelect != null) {
                     lastSelect.clearOperate();
+                    LastSelectManager.getInstance().setLastSelect(null);
                     return true;
                 }
                 return false;
+            }
+
+            @Override
+            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
+                if (lastSelect != null) {
+                    if (lastSelect.isOnTouchDown()) {
+                        lastSelect.onScroll();
+                    } else {
+                        lastSelect.onScrollFromOther();
+                        LastSelectManager.getInstance().setLastSelect(null);
+                    }
+                }
+                return super.onScroll(e1, e2, distanceX, distanceY);
+            }
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
+                if (lastSelect != null) {
+                    if (lastSelect.isOnTouchDown()) {
+                        lastSelect.onFling();
+                    } else {
+                        lastSelect.onScrollFromOther();
+                        LastSelectManager.getInstance().setLastSelect(null);
+                    }
+                }
+
+                return super.onFling(e1, e2, velocityX, velocityY);
+            }
+
+            @Override
+            public boolean onDown(MotionEvent e) {
+                LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
+                if (lastSelect != null) {
+                    lastSelect.onTouchDownOutside(e);
+                }
+                return super.onDown(e);
             }
         });
     }
