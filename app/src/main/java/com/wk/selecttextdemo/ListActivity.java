@@ -15,6 +15,7 @@ import com.wk.selecttextlib.LastSelectManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class ListActivity extends AppCompatActivity {
 
@@ -35,9 +36,11 @@ public class ListActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(layoutManager);
 
 
+        Random random = new Random();
+        int[] ids = new int[]{R.string.long_text1, R.string.long_text2, R.string.long_text3, R.string.long_text4, R.string.long_text5};
         List<String> datas = new ArrayList<>();
-        for (int i = 0; i < 15; i++) {
-            datas.add(getString(R.string.long_text1));
+        for (int i = 0; i < 100; i++) {
+            datas.add(getString(ids[Math.abs(random.nextInt(10) % ids.length)]));
         }
 
         SimpleAdapter adapter = new SimpleAdapter(this, datas);
