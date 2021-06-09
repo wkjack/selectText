@@ -3,11 +3,16 @@ package com.wk.selecttextdemo;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.wk.selecttextlib.LastSelectListener;
+import com.wk.selecttextlib.LastSelectManager;
 import com.wk.selecttextlib.selectText.DefOnSelectOptionListener;
 import com.wk.selecttextlib.SelectOption;
 import com.wk.selecttextlib.selectText.SelectTextHelper;
@@ -19,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView mTvTest;
 
-    private SelectTextHelper mSelectableTextHelper;
+    private GestureDetector gestureDetector;
 
 
     @Override
@@ -28,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         initView();
 
-        mSelectableTextHelper = new SelectTextHelper.Builder(mTvTest)
+        SelectTextHelper mSelectableTextHelper = new SelectTextHelper.Builder(mTvTest)
                 .setSelectedColor(getResources().getColor(R.color.selected_blue))
                 .setCursorHandleSizeInDp(20)
                 .setCursorHandleColor(getResources().getColor(R.color.cursor_handle_color))
@@ -56,14 +61,41 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
+                if (lastSelect != null) {
+                    lastSelect.clearOperate();
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 
     private void initView() {
         mTvTest = (TextView) findViewById(R.id.tv_test);
-        //mTvTest.setTextIsSelectable(true);
+        mTvTest.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                Log.e("主页面", "文本点击");
+            }
+        });
 
         findViewById(R.id.main_jumpToList).setOnClickListener(v -> {
             startActivity(new Intent(MainActivity.this, ListActivity.class));
         });
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        return gestureDetector.onTouchEvent(event);
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        super.dispatchTouchEvent(event);
+        return gestureDetector.onTouchEvent(event);
     }
 }

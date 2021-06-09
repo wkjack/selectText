@@ -32,59 +32,101 @@
 2. 引用库
 
 	```
-	implementation 'com.github.wkjack:selectText:1.1.4'
+	implementation 'com.github.wkjack:selectText:1.1.5'
 	```
 
 3. 使用
 	
-	* 带文本选择的操作
+	1. 在对应控件处使用
 	
-		```
-		SelectTextHelper mSelectableTextHelper = new SelectTextHelper.Builder(文本控件)
-					.setSelectedColor(context.getResources().getColor(R.color.selected_blue))
-					.setCursorHandleSizeInDp(20)
-					.setCursorHandleColor(context.getResources().getColor(R.color.cursor_handle_color))
-					.build();
-		mSelectableTextHelper.setSelectOptionListener(new DefOnSelectOptionListener(mSelectableTextHelper) {
-				@Override
-				public List<SelectOption> calculateSelectInfo(@NonNull SelectionInfo selectionInfo, String textContent) {
-					List<SelectOption> optionList = super.calculateSelectInfo(selectionInfo, textContent);
-					optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "分享"));
-					optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "搜索"));
-					return optionList;
-				}
-				
-				@Override
-				public void onSelectOption(@NonNull SelectionInfo selectionInfo, SelectOption option) {
-					super.onSelectOption(selectionInfo, option);
-					if (option.getType() == SelectOption.TYPE_CUSTOM) {
-						Log.e("自定义选项：", option.toString());
+		* 带文本选择的操作
+			
+			```
+			SelectTextHelper mSelectableTextHelper = new SelectTextHelper.Builder(文本控件)
+						.setSelectedColor(context.getResources().getColor(R.color.selected_blue))
+						.setCursorHandleSizeInDp(20)
+						.setCursorHandleColor(context.getResources().getColor(R.color.cursor_handle_color))
+						.build();
+			mSelectableTextHelper.setSelectOptionListener(new DefOnSelectOptionListener(mSelectableTextHelper) {
+					@Override
+					public List<SelectOption> calculateSelectInfo(@NonNull SelectionInfo selectionInfo, String textContent) {
+						List<SelectOption> optionList = super.calculateSelectInfo(selectionInfo, textContent);
+						optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "分享"));
+						optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "搜索"));
+						return optionList;
 					}
-				}
-		});
-		```
+					
+					@Override
+					public void onSelectOption(@NonNull SelectionInfo selectionInfo, SelectOption option) {
+						super.onSelectOption(selectionInfo, option);
+						if (option.getType() == SelectOption.TYPE_CUSTOM) {
+							Log.e("自定义选项：", option.toString());
+						}
+					}
+			});
+			```
 	
-		* setSelectedColor：设置文字选中背景色
-		* setCursorHandleSizeInDp：游标大小
-		* setCursorHandleColor：游标色值
-		* setSelectOptionListener：选择回调监听
+			* setSelectedColor：设置文字选中背景色
+			* setCursorHandleSizeInDp：游标大小
+			* setCursorHandleColor：游标色值
+			* setSelectOptionListener：选择回调监听
 
-	* 不含文本选择的操作
+		* 不含文本选择的操作
 
+			```
+			SelectHelper mSelectHelper = new SelectHelper.Builder(文本控件).build();
+			mSelectHelper.selectHelper.setSelectListener(new OnSelectListener() {
+				@Override
+				public List<SelectOption> calculateSelectInfo() {
+					//自定义操作选项
+					return null;
+				}
+			
+				@Override
+				public void onSelectOption(SelectOption selectOption) {}
+			});
+			```
+	2. activity添加手势处理（解决点击空白区域关闭弹框）
+	
 		```
-		SelectHelper mSelectHelper = new SelectHelper.Builder(文本控件)
-					.build();
-		mSelectHelper.selectHelper.setSelectListener(new OnSelectListener() {
-			@Override
-			public List<SelectOption> calculateSelectInfo() {
-				return null;
+		public class ListActivity extends AppCompatActivity {
+			
+    		private GestureDetector gestureDetector;
+    		
+    		@Override
+    		protected void onCreate(Bundle savedInstanceState) {
+    			super.onCreate(savedInstanceState);
+    			setContentView(R.layout.activity_list);
+    			
+    			...
+    			
+    			gestureDetector= new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+    				@Override
+    				public boolean onSingleTapUp(MotionEvent e) {
+    					LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
+    					if (lastSelect !=null) {
+    						lastSelect.clearOperate();
+    						return true;
+    					}
+    					return false;
+    				}
+    			});
 			}
 			
 			@Override
-			public void onSelectOption(SelectOption selectOption) {}
-		});
+			public boolean onTouchEvent(MotionEvent event) {
+				return gestureDetector.onTouchEvent(event);
+			}
+			
+			@Override
+			public boolean dispatchTouchEvent(MotionEvent event) {
+				super.dispatchTouchEvent(event);
+				return gestureDetector.onTouchEvent(event);
+			}
+		}
 		```
-
+	
+	
 	
 ### 参考资料
 

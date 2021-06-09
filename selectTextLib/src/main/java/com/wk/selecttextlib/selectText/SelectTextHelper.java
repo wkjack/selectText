@@ -24,6 +24,7 @@ import com.wk.selecttextlib.LastSelectListener;
 import com.wk.selecttextlib.LastSelectManager;
 import com.wk.selecttextlib.SelectionInfo;
 import com.wk.selecttextlib.TextLayoutUtil;
+import com.wk.selecttextlib.util.ClickUtil;
 
 @SuppressLint("ClickableViewAccessibility")
 public class SelectTextHelper implements LastSelectListener {
@@ -53,6 +54,7 @@ public class SelectTextHelper implements LastSelectListener {
     private boolean isHideOpetate = true;
 
     private volatile long lastSelectTime; //记录上一次选择数据时的时间
+    private View.OnClickListener originalClickListener; //控件原有的点击事件
 
     public SelectTextHelper(Builder builder) {
         mTextView = builder.mTextView;
@@ -68,6 +70,7 @@ public class SelectTextHelper implements LastSelectListener {
     private void init() {
         //设置文本控件可设置样式
         mTextView.setText(mTextView.getText(), TextView.BufferType.SPANNABLE);
+        originalClickListener = ClickUtil.getViewClickListener(mTextView);
         mTextView.setOnLongClickListener(v -> {
             //长按显示选中布局
             Log.e("列表", "选中:" + SelectTextHelper.this);
@@ -82,6 +85,26 @@ public class SelectTextHelper implements LastSelectListener {
             return false;
         });
 
+        mTextView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                LastSelectListener lastSelectText = LastSelectManager.getInstance().getLastSelect();
+                if (lastSelectText != null) {
+                    lastSelectText.clearOperate();
+                    LastSelectManager.getInstance().setLastSelect(null);
+
+                    if (!lastSelectText.equals(SelectTextHelper.this)) {
+                        if (originalClickListener != null) {
+                            originalClickListener.onClick(v);
+                        }
+                    }
+                } else {
+                    if (originalClickListener != null) {
+                        originalClickListener.onClick(v);
+                    }
+                }
+            }
+        });
         mTextView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override
             public void onViewAttachedToWindow(View v) {
@@ -428,7 +451,7 @@ public class SelectTextHelper implements LastSelectListener {
                 mTextView.getGlobalVisibleRect(rect);
 
                 mPopupWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, realX, realY);
-            }catch (Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
