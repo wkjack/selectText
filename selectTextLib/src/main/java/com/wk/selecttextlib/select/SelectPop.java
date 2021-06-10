@@ -160,7 +160,7 @@ public class SelectPop {
         }
 
         //3. 中间显示
-        int posY = (viewRect.top + viewRect.bottom) / 2 + 16;
+        int posY = (rectangle.top + rectangle.bottom) / 3;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             //设置高度
             mWindow.setElevation(8f);
