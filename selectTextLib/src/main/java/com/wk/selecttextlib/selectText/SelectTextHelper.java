@@ -60,7 +60,6 @@ public class SelectTextHelper implements LastSelectListener {
 
         selectOptionListener = new DefOnSelectOptionListener(this);
 
-        mTextView.setTag(R.id.tag_select_help, this);
         init();
     }
 
