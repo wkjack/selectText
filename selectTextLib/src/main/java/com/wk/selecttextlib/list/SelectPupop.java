@@ -3,6 +3,7 @@ package com.wk.selecttextlib.list;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Rect;
+import android.os.Build;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.text.Layout;
@@ -181,7 +182,7 @@ public class SelectPupop {
                         //设置高度
                         mWindow.setElevation(8f);
                     }
-                    mWindow.update(posX, posY, -1, -1);
+//                    mWindow.update(posX, posY, -1, -1);
                     mWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, posX, posY);
                     return;
                 }
@@ -193,120 +194,90 @@ public class SelectPupop {
                 //设置高度
                 mWindow.setElevation(8f);
             }
-            mWindow.update(posX, posY, -1, -1);
+//            mWindow.update(posX, posY, -1, -1);
             mWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, posX, posY);
             return;
         }
 
         //非文本选择
-        //TODO 计算弹框显示位置
+        Context mContext = dependentView.getContext();
+        if (mContext == null) {
+            return;
+        }
 
+        int[] mTempCoors = new int[2];
+        dependentView.getLocationInWindow(mTempCoors);
+
+        Rect viewRect = new Rect();
+        dependentView.getGlobalVisibleRect(viewRect);
+
+        if(mTempCoors[0] != viewRect.left && mTempCoors[1] !=viewRect.top) {
+            //经过实验，此种情况为控件已无显示区域
+
+            int posX = 0;
+            int posY = -mHeight -16;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                //设置高度
+                mWindow.setElevation(8f);
+            }
+
+            mWindow.showAtLocation(dependentView, Gravity.NO_GRAVITY, posX, posY);
+            return;
+        }
+
+        int posX;
+        if (viewRect.left + mWidth <= viewRect.right) {
+            //弹框可现实在控件内部
+            posX = (viewRect.left + viewRect.right - mWidth) / 2;
+
+        } else if (viewRect.left + mWidth < TextLayoutUtil.getScreenWidth(mContext)) {
+            //弹框超出控件范围，但未超出屏幕
+            posX = viewRect.left;
+        } else {
+            posX = TextLayoutUtil.getScreenWidth(mContext) - mWidth;
+        }
+
+        //获取decorView的显示区域
+        Rect rectangle = new Rect();
+        ((Activity) mContext).getWindow().getDecorView().getWindowVisibleDisplayFrame(rectangle);
+
+        //1. 尝试计算顶部显示
+        if (viewRect.top - mHeight - 16 > rectangle.top) {
+            //弹框可以显示在getDecorView()区域内
+            int posY = viewRect.top - mHeight - 16;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                //设置高度
+                mWindow.setElevation(8f);
+            }
+
+            mWindow.showAtLocation(dependentView, Gravity.NO_GRAVITY, posX, posY);
+            return;
+        }
+
+        //2. 顶部不够显示，尝试计算底部显示
+        if (viewRect.bottom + mHeight + 16 <= TextLayoutUtil.getScreenHeight(mContext)) {
+            //未超出显示区域
+            if (viewRect.bottom > 0) {
+                //说明当前控件内容完全被遮挡，没有显示内容
+                int posY = viewRect.bottom;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    //设置高度
+                    mWindow.setElevation(8f);
+                }
+
+                mWindow.showAtLocation(dependentView, Gravity.NO_GRAVITY, posX, posY);
+                return;
+            }
+        }
+
+        //3. 中间显示
+        int posY = (rectangle.top + rectangle.bottom) / 3;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            //设置高度
+            mWindow.setElevation(8f);
+        }
+        mWindow.showAtLocation(dependentView, Gravity.NO_GRAVITY, posX, posY);
     }
-
-//    public void show(TextView mTextView, SelectionInfo mSelectionInfo, boolean updateLocation) {
-//        if (mTextView == null || mSelectionInfo == null) {
-//            return;
-//        }
-//        Context mContext = mTextView.getContext();
-//        if (mContext == null) {
-//            return;
-//        }
-//        int[] mTempCoors = new int[2];
-//        mTextView.getLocationInWindow(mTempCoors);
-//
-//        Rect viewRect = new Rect();
-//        mTextView.getGlobalVisibleRect(viewRect);
-//
-//        if (mTempCoors[0] != viewRect.left && mTempCoors[1] != viewRect.top) {
-//            //经过实验，此种情况为控件已无显示区域
-//
-//            int posX = 0;
-//            int posY = -mHeight - 16;
-//            if (VERSION.SDK_INT >= VERSION_CODES.LOLLIPOP) {
-//                //设置高度
-//                mWindow.setElevation(8f);
-//            }
-//            if (updateLocation) {
-//                mWindow.update(posX, posY, -1, -1);
-//            } else {
-//                mWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, posX, posY);
-//            }
-//            return;
-//        }
-//
-//        int posX;
-//        if (viewRect.left + mWidth <= viewRect.right) {
-//            //弹框可现实在控件内部
-//            posX = (viewRect.left + viewRect.right - mWidth) / 2;
-//
-//        } else if (viewRect.left + mWidth < TextLayoutUtil.getScreenWidth(mContext)) {
-//            //弹框超出控件范围，但未超出屏幕
-//            posX = viewRect.left;
-//        } else {
-//            posX = TextLayoutUtil.getScreenWidth(mContext) - mWidth;
-//        }
-//
-//        //获取decorView的显示区域
-//        Rect rectangle = new Rect();
-//        ((Activity) mContext).getWindow().getDecorView().getWindowVisibleDisplayFrame(rectangle);
-//
-//        Layout layout = mTextView.getLayout();
-//
-//        //1. 尝试计算顶部显示
-//        int topY = layout.getLineTop(layout.getLineForOffset(mSelectionInfo.mStart));
-//        int realTopY = mTempCoors[1] + mTextView.getPaddingTop() + topY;
-//        if (realTopY - mHeight - 16 > rectangle.top) {
-//            //弹框可以显示在getDecorView()区域内
-//
-//            int posY = realTopY - mHeight - 16;
-//            if (VERSION.SDK_INT >= VERSION_CODES.LOLLIPOP) {
-//                //设置高度
-//                mWindow.setElevation(8f);
-//            }
-//            if (updateLocation) {
-//                mWindow.update(posX, posY, -1, -1);
-//            } else {
-//                mWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, posX, posY);
-//            }
-//            return;
-//        }
-//
-//        //2. 顶部不够显示，尝试计算底部显示
-//        int bottomY = layout.getLineBottom(layout.getLineForOffset(mSelectionInfo.mEnd));
-//        int realBottomY = mTempCoors[1] + mTextView.getPaddingTop() + bottomY;
-//
-//        int cursorHeight = selectTextHelper.getmCursorHandleSize();
-//
-//        if (realBottomY + cursorHeight + mHeight + 16 <= TextLayoutUtil.getScreenHeight(mContext)) {
-//            //未超出显示区域
-//            if (realBottomY > 0) {
-//                //说明当前控件内容完全被遮挡，没有显示内容
-//                int posY = realBottomY + cursorHeight + 16;
-//                if (VERSION.SDK_INT >= VERSION_CODES.LOLLIPOP) {
-//                    //设置高度
-//                    mWindow.setElevation(8f);
-//                }
-//                if (updateLocation) {
-//                    mWindow.update(posX, posY, -1, -1);
-//                } else {
-//                    mWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, posX, posY);
-//                }
-//                return;
-//            }
-//        }
-//
-//        //3. 中间显示
-//        int posY = (rectangle.top + rectangle.bottom) / 3;
-//        if (VERSION.SDK_INT >= VERSION_CODES.LOLLIPOP) {
-//            //设置高度
-//            mWindow.setElevation(8f);
-//        }
-//        if (updateLocation) {
-//            mWindow.update(posX, posY, -1, -1);
-//        } else {
-//            mWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, posX, posY);
-//        }
-//    }
 
     public void dismiss() {
         mWindow.dismiss();
