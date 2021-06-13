@@ -21,7 +21,7 @@ import androidx.annotation.NonNull;
 import com.wk.selecttextlib.R;
 import com.wk.selecttextlib.SelectOption;
 import com.wk.selecttextlib.SelectOptionAdapter;
-import com.wk.selecttextlib.TextLayoutUtil;
+import com.wk.selecttextlib.util.TextLayoutUtil;
 import com.wk.selecttextlib.list.listener.OnOperateListener;
 import com.wk.selecttextlib.list.listener.OnSelectPopListener;
 import com.wk.selecttextlib.list.model.SelectDataInfo;

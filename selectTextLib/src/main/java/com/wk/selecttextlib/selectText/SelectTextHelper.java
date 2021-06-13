@@ -20,9 +20,8 @@ import androidx.annotation.NonNull;
 
 import com.wk.selecttextlib.LastSelectListener;
 import com.wk.selecttextlib.LastSelectManager;
-import com.wk.selecttextlib.R;
 import com.wk.selecttextlib.SelectionInfo;
-import com.wk.selecttextlib.TextLayoutUtil;
+import com.wk.selecttextlib.util.TextLayoutUtil;
 import com.wk.selecttextlib.util.ClickUtil;
 
 @SuppressLint("ClickableViewAccessibility")

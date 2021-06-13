@@ -11,7 +11,7 @@ import android.view.View;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
-import com.wk.selecttextlib.TextLayoutUtil;
+import com.wk.selecttextlib.util.TextLayoutUtil;
 import com.wk.selecttextlib.list.listener.OnSelectCursorListener;
 import com.wk.selecttextlib.list.listener.OnSelectPopListener;
 import com.wk.selecttextlib.list.model.SelectDataInfo;

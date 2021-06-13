@@ -1,4 +1,4 @@
-package com.wk.selecttextlib;
+package com.wk.selecttextlib.util;
 
 import android.content.Context;
 import android.text.Layout;
