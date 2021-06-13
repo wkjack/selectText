@@ -14,11 +14,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.wk.selecttextdemo.adapter.SimpleListAdapter;
 import com.wk.selecttextdemo.model.DataModel;
 import com.wk.selecttextlib.list.ListSelectTextHelp;
-import com.wk.selecttextlib.list.bind.SelectTextBind;
+import com.wk.selecttextlib.list.bind.BaseSelectBind;
 import com.wk.selecttextlib.list.SelectManager;
 import com.wk.selecttextlib.list.listener.OnFindViewListener;
 import com.wk.selecttextlib.list.model.SelectDataInfo;
-import com.wk.selecttextlib.selectText.SelectTextHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +55,7 @@ public class ListActivity extends AppCompatActivity implements OnFindViewListene
                 //点击事件执行此方法
 
                 if (selectTextHelp != null) {
-                    SelectTextBind selectBind = selectTextHelp.getSelectBind();
+                    BaseSelectBind selectBind = selectTextHelp.getSelectBind();
                     if (selectBind != null) {
                         Log.e("详情", "onSingleTapUp-->" + selectBind);
                         if (selectBind.isTouchDown()) {
@@ -119,7 +118,7 @@ public class ListActivity extends AppCompatActivity implements OnFindViewListene
 //                }
 
                 if (selectTextHelp != null) {
-                    SelectTextBind selectBind = selectTextHelp.getSelectBind();
+                    BaseSelectBind selectBind = selectTextHelp.getSelectBind();
                     if (selectBind != null) {
                         selectBind.onGestureDown(e);
                     }
@@ -133,7 +132,7 @@ public class ListActivity extends AppCompatActivity implements OnFindViewListene
             public void onScrollStateChanged(AbsListView view, int scrollState) {
                 Log.e("详情", "滚动监听--01-->" + scrollState);
                 if (selectTextHelp != null) {
-                    SelectTextBind selectBind = selectTextHelp.getSelectBind();
+                    BaseSelectBind selectBind = selectTextHelp.getSelectBind();
                     if (selectBind != null) {
                         if (!selectBind.isTouchDown()) {
                             selectTextHelp.onSelectData(null);
@@ -227,7 +226,7 @@ public class ListActivity extends AppCompatActivity implements OnFindViewListene
                     return;
                 }
 
-                SelectTextBind selectBind = (SelectTextBind) view.getTag(R.id.select_bind);
+                BaseSelectBind selectBind = (BaseSelectBind) view.getTag(R.id.select_bind);
                 selectTextHelp.setSelectBind(selectBind);
                 selectTextHelp.onShowSelect();
             }

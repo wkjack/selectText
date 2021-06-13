@@ -18,7 +18,7 @@ import com.wk.selecttextlib.util.ClickUtil;
 /**
  * 文本选择绑定
  */
-public class SelectTextBind {
+public class SelectTextBind extends BaseSelectBind {
     private final int mSelectedColor = 0xFFAFE1F4;
 
     private int pos;
@@ -26,10 +26,6 @@ public class SelectTextBind {
     private TextView mTextView;
 
     private View.OnClickListener originalClickListener;
-    private boolean isTriggerLongClick = false; //是否触发长按点击事件
-    private boolean isTouchDown = false; //是否触发ACTION_DOWN
-    private MotionEvent downEvent; //记录ACTION_DOWN的event
-
 
     private Spannable mSpannable; //文本内容
     private BackgroundColorSpan mSpan; //选中背景Span

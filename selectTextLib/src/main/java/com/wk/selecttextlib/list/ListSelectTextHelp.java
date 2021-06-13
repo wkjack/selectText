@@ -9,7 +9,7 @@ import androidx.annotation.NonNull;
 
 import com.wk.selecttextlib.R;
 import com.wk.selecttextlib.SelectOption;
-import com.wk.selecttextlib.list.bind.SelectTextBind;
+import com.wk.selecttextlib.list.bind.BaseSelectBind;
 import com.wk.selecttextlib.list.listener.OnFindViewListener;
 import com.wk.selecttextlib.list.listener.OnOperateListener;
 import com.wk.selecttextlib.list.listener.OnSelectCursorListener;
@@ -136,7 +136,7 @@ public class ListSelectTextHelp implements OnOperateListener, OnSelectPopListene
                     }
 
                     this.selectDataInfo = newSelectDataInfo;
-                    this.selectBind = (SelectTextBind) view.getTag(R.id.select_bind);
+                    this.selectBind = (BaseSelectBind) view.getTag(R.id.select_bind);
                     onShowSelect();
                     return;
                 }
@@ -160,7 +160,7 @@ public class ListSelectTextHelp implements OnOperateListener, OnSelectPopListene
             }
 
             this.selectDataInfo = newSelectDataInfo;
-            this.selectBind = (SelectTextBind) view.getTag(R.id.select_bind);
+            this.selectBind = (BaseSelectBind) view.getTag(R.id.select_bind);
             onShowSelect();
         }
     }
@@ -265,13 +265,13 @@ public class ListSelectTextHelp implements OnOperateListener, OnSelectPopListene
     }
 
 
-    private SelectTextBind selectBind;
+    private BaseSelectBind selectBind;
 
-    public void setSelectBind(SelectTextBind selectBind) {
+    public void setSelectBind(BaseSelectBind selectBind) {
         this.selectBind = selectBind;
     }
 
-    public SelectTextBind getSelectBind() {
+    public BaseSelectBind getSelectBind() {
         return selectBind;
     }
 
