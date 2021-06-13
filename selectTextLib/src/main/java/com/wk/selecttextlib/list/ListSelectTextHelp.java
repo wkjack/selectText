@@ -68,9 +68,7 @@ public class ListSelectTextHelp implements OnSelectPopListener, OnSelectCursorLi
     @Override
     public void showOperatePop() {
         //显示内容
-        if (SelectDataInfo.TYPE_TEXT == selectDataInfo.getType()) {
-            selectBind.update();
-        }
+        selectBind.update();
 
         hideSelectPupop();
         selectPupop = new SelectPupop.Builder(context)
