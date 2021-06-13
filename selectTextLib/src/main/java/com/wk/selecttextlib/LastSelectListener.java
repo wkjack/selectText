@@ -9,6 +9,11 @@ public interface LastSelectListener {
      */
     void clearOperate();
 
+    void hideOperate();
+
+    void showOperate();
+
+
     boolean isOnTouchDown();
 
     /**
