@@ -1,4 +1,4 @@
-package com.wk.selecttextlib.list;
+package com.wk.selecttextlib.list.bind;
 
 import android.annotation.SuppressLint;
 import android.graphics.Rect;
@@ -10,6 +10,8 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.wk.selecttextlib.R;
+import com.wk.selecttextlib.list.ListSelectTextHelp;
+import com.wk.selecttextlib.list.SelectManager;
 import com.wk.selecttextlib.list.model.SelectDataInfo;
 import com.wk.selecttextlib.util.ClickUtil;
 
