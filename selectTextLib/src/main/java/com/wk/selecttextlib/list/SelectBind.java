@@ -119,9 +119,9 @@ public class SelectBind {
         Rect viewRect = new Rect();
         mTextView.getGlobalVisibleRect(viewRect);
 
-        if(event.getAction() == MotionEvent.ACTION_DOWN
-                && event.getX() >= viewRect.left && event.getX() <=viewRect.right
-                && event.getY() >= viewRect.top && event.getX() <=viewRect.bottom) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN
+                && event.getX() >= viewRect.left && event.getX() <= viewRect.right
+                && event.getY() >= viewRect.top && event.getY() <= viewRect.bottom) {
             isTouchDown = true;
         } else {
             isTouchDown = false;
