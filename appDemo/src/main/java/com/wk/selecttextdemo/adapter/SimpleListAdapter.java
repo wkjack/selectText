@@ -10,7 +10,12 @@ import android.widget.TextView;
 
 import com.wk.selecttextdemo.R;
 import com.wk.selecttextdemo.model.DataModel;
+import com.wk.selecttextlib.SelectOption;
+import com.wk.selecttextlib.list.ListSelectTextHelp;
+import com.wk.selecttextlib.list.SelectManager;
 import com.wk.selecttextlib.list.bind.SelectTextBind;
+import com.wk.selecttextlib.list.listener.OnOperateListener;
+import com.wk.selecttextlib.list.model.SelectDataInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,8 +69,36 @@ public class SimpleListAdapter extends BaseAdapter {
             }
         });
 
-        
         SelectTextBind selectBind = new SelectTextBind(holder.content, datas.get(position), position);
+        selectBind.setOperateListener(new OnOperateListener() {
+            @Override
+            public List<SelectOption> getOperateList() {
+                List<SelectOption> optionList = new ArrayList<>();
+
+                optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "搜索"));
+                optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "复制"));
+                optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "全选"));
+                return optionList;
+            }
+
+            @Override
+            public void onOperate(SelectOption operate) {
+                ListSelectTextHelp selectTextHelp = SelectManager.getInstance().get(selectBind.getSelectKey());
+                if (selectTextHelp != null) {
+                    SelectDataInfo selectDataInfo = selectTextHelp.getSelectDataInfo();
+                    if("全选".equals(operate.getName())) {
+                        selectDataInfo.setStart(0);
+                        selectDataInfo.setEnd(selectBind.getTextView().getText().toString().length());
+                        selectDataInfo.setSelectContent(selectBind.getSelectData(selectDataInfo));
+
+                        selectTextHelp.onSelectData(selectDataInfo);
+                    }
+                }
+
+
+                Log.e("详情", "操作：" + operate.getType() + "/" + operate.getName());
+            }
+        });
         selectBind.bind();
         return convertView;
     }

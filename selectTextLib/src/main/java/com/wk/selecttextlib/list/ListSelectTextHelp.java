@@ -8,19 +8,14 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 
 import com.wk.selecttextlib.R;
-import com.wk.selecttextlib.SelectOption;
 import com.wk.selecttextlib.list.bind.BaseSelectBind;
 import com.wk.selecttextlib.list.listener.OnFindViewListener;
-import com.wk.selecttextlib.list.listener.OnOperateListener;
 import com.wk.selecttextlib.list.listener.OnSelectCursorListener;
 import com.wk.selecttextlib.list.listener.OnSelectDataListener;
 import com.wk.selecttextlib.list.listener.OnSelectPopListener;
 import com.wk.selecttextlib.list.model.SelectDataInfo;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class ListSelectTextHelp implements OnOperateListener, OnSelectPopListener, OnSelectCursorListener, OnSelectDataListener {
+public class ListSelectTextHelp implements OnSelectPopListener, OnSelectCursorListener, OnSelectDataListener {
 
     private final int CURSOR_SIZE = 50;
 
@@ -38,37 +33,6 @@ public class ListSelectTextHelp implements OnOperateListener, OnSelectPopListene
     public ListSelectTextHelp(@NonNull Context context, @NonNull OnFindViewListener findViewListener) {
         this.context = context;
         this.findViewListener = findViewListener;
-    }
-
-    @Override
-    public List<SelectOption> getOperateList() {
-        if (selectDataInfo == null) {
-            return new ArrayList<>();
-        }
-
-        List<SelectOption> optionList = new ArrayList<>();
-        if (SelectDataInfo.TYPE_TEXT == selectDataInfo.getType()) {
-            //文本选择
-            optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "复制"));
-            optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "全选"));
-            optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "分享"));
-            optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "搜索"));
-            optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "翻译"));
-            optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "注释"));
-            return optionList;
-        }
-
-        //非文本选择
-        optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "复制"));
-        optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "全选"));
-        optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "分享"));
-        return optionList;
-    }
-
-    @Override
-    public void onOperate(SelectOption operate) {
-        //操作
-
     }
 
     @Override
@@ -112,7 +76,7 @@ public class ListSelectTextHelp implements OnOperateListener, OnSelectPopListene
         selectPupop = new SelectPupop.Builder(context)
                 .setCursorHandleSize(CURSOR_SIZE)
                 .setSelectPopListener(this)
-                .setOperateListener(this)
+                .setOperateListener(selectBind.getOperateListener())
                 .build();
         selectPupop.show();
     }
@@ -193,7 +157,7 @@ public class ListSelectTextHelp implements OnOperateListener, OnSelectPopListene
         selectPupop = new SelectPupop.Builder(context)
                 .setCursorHandleSize(CURSOR_SIZE)
                 .setSelectPopListener(this)
-                .setOperateListener(this)
+                .setOperateListener(selectBind.getOperateListener())
                 .build();
         selectPupop.show();
 

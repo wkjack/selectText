@@ -2,6 +2,7 @@ package com.wk.selecttextlib.list.bind;
 
 import android.view.MotionEvent;
 
+import com.wk.selecttextlib.list.listener.OnOperateListener;
 import com.wk.selecttextlib.list.model.SelectDataInfo;
 
 public class BaseSelectBind {
@@ -11,6 +12,16 @@ public class BaseSelectBind {
     protected boolean isTouchDown = false; //是否触发ACTION_DOWN
     protected MotionEvent downEvent; //记录ACTION_DOWN的event
 
+    private OnOperateListener operateListener;
+
+
+    public OnOperateListener getOperateListener() {
+        return operateListener;
+    }
+
+    public void setOperateListener(OnOperateListener operateListener) {
+        this.operateListener = operateListener;
+    }
 
     public boolean isTriggerLongClick() {
         return isTriggerLongClick;
@@ -38,5 +49,10 @@ public class BaseSelectBind {
 
     public String getSelectData(SelectDataInfo selectDataInfo) {
         return null;
+    }
+
+
+    public String getSelectKey() {
+        return "";
     }
 }

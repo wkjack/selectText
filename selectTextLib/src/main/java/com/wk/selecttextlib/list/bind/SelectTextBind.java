@@ -51,7 +51,7 @@ public class SelectTextBind extends BaseSelectBind {
             selectDataInfo.setEnd(mTextView.getText().length());
             selectDataInfo.setSelectContent(getSelectData(selectDataInfo));
 
-            ListSelectTextHelp selectTextHelp = SelectManager.getInstance().get(mTextView.getContext().toString());
+            ListSelectTextHelp selectTextHelp = SelectManager.getInstance().get(getSelectKey());
             if (selectTextHelp != null) {
                 selectTextHelp.onSelectData(selectDataInfo);
                 return true;
@@ -82,7 +82,7 @@ public class SelectTextBind extends BaseSelectBind {
                         //已触发点击事件
 
                         //移出选中数据
-                        ListSelectTextHelp selectTextHelp = SelectManager.getInstance().get(mTextView.getContext().toString());
+                        ListSelectTextHelp selectTextHelp = SelectManager.getInstance().get(getSelectKey());
                         if (selectTextHelp != null) {
                             selectTextHelp.onSelectData(null);
                         }
@@ -168,7 +168,7 @@ public class SelectTextBind extends BaseSelectBind {
 
     public void update() {
         SelectDataInfo selectDataInfo = null;
-        ListSelectTextHelp selectTextHelp = SelectManager.getInstance().get(mTextView.getContext().toString());
+        ListSelectTextHelp selectTextHelp = SelectManager.getInstance().get(getSelectKey());
         if (selectTextHelp != null) {
             selectDataInfo = selectTextHelp.getSelectDataInfo();
         }
@@ -207,5 +207,10 @@ public class SelectTextBind extends BaseSelectBind {
 
     public Object getData() {
         return data;
+    }
+
+    @Override
+    public final String getSelectKey() {
+        return mTextView.getContext().toString();
     }
 }
