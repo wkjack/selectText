@@ -15,7 +15,10 @@ import com.wk.selecttextlib.list.SelectManager;
 import com.wk.selecttextlib.list.model.SelectDataInfo;
 import com.wk.selecttextlib.util.ClickUtil;
 
-public class SelectBind {
+/**
+ * 文本选择绑定
+ */
+public class SelectTextBind {
     private final int mSelectedColor = 0xFFAFE1F4;
 
     private int pos;
@@ -31,7 +34,7 @@ public class SelectBind {
     private Spannable mSpannable; //文本内容
     private BackgroundColorSpan mSpan; //选中背景Span
 
-    public SelectBind(TextView textView, Object data, int pos) {
+    public SelectTextBind(TextView textView, Object data, int pos) {
         this.mTextView = textView;
         this.data = data;
         this.pos = pos;
