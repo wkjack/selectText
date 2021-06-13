@@ -21,7 +21,6 @@ import com.wk.selecttextlib.util.ClickUtil;
 public class SelectTextBind extends BaseSelectBind {
     private final int mSelectedColor = 0xFFAFE1F4;
 
-    private int pos;
     private Object data;
     private TextView mTextView;
 
@@ -30,10 +29,9 @@ public class SelectTextBind extends BaseSelectBind {
     private Spannable mSpannable; //文本内容
     private BackgroundColorSpan mSpan; //选中背景Span
 
-    public SelectTextBind(TextView textView, Object data, int pos) {
+    public SelectTextBind(TextView textView, Object data) {
         this.mTextView = textView;
         this.data = data;
-        this.pos = pos;
     }
 
     @SuppressLint("ClickableViewAccessibility")

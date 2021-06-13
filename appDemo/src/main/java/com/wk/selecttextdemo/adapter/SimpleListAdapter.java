@@ -69,7 +69,7 @@ public class SimpleListAdapter extends BaseAdapter {
             }
         });
 
-        SelectTextBind selectBind = new SelectTextBind(holder.content, datas.get(position), position);
+        SelectTextBind selectBind = new SelectTextBind(holder.content, datas.get(position));
         selectBind.setOperateListener(new OnOperateListener() {
             @Override
             public List<SelectOption> getOperateList() {
