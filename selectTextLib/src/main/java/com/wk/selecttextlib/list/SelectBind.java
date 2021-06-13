@@ -1,10 +1,10 @@
 package com.wk.selecttextlib.list;
 
 import android.annotation.SuppressLint;
+import android.graphics.Rect;
 import android.text.Spannable;
 import android.text.Spanned;
 import android.text.style.BackgroundColorSpan;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
@@ -37,7 +37,6 @@ public class SelectBind {
 
     @SuppressLint("ClickableViewAccessibility")
     public void bind() {
-        Log.e("详情", "selectbind-->" + this);
         mTextView.setText(mTextView.getText(), TextView.BufferType.SPANNABLE);
         originalClickListener = ClickUtil.getViewClickListener(mTextView);
 
@@ -63,7 +62,6 @@ public class SelectBind {
         mTextView.setOnTouchListener((v, event) -> {
             //记录触摸点坐标
             int action = event.getAction();
-            Log.e("详情", "文本-->" + MotionEvent.actionToString(action));
             switch (action) {
                 case MotionEvent.ACTION_DOWN:
                     isTriggerLongClick = false;
@@ -110,7 +108,6 @@ public class SelectBind {
         });
 
         mTextView.setTag(R.id.select_bind, this);
-        mTextView.setTag(R.id.select_tag);
     }
 
     /**
@@ -119,7 +116,16 @@ public class SelectBind {
      * @param event 事件
      */
     public void onGestureDown(MotionEvent event) {
-        isTouchDown = event.equals(downEvent);
+        Rect viewRect = new Rect();
+        mTextView.getGlobalVisibleRect(viewRect);
+
+        if(event.getAction() == MotionEvent.ACTION_DOWN
+                && event.getX() >= viewRect.left && event.getX() <=viewRect.right
+                && event.getY() >= viewRect.top && event.getX() <=viewRect.bottom) {
+            isTouchDown = true;
+        } else {
+            isTouchDown = false;
+        }
         downEvent = null;
     }
 
@@ -192,5 +198,13 @@ public class SelectBind {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public TextView getTextView() {
+        return mTextView;
+    }
+
+    public Object getData() {
+        return data;
     }
 }
