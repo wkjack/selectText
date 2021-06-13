@@ -12,11 +12,13 @@ import android.widget.ListView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.wk.selecttextdemo.adapter.SimpleListAdapter;
+import com.wk.selecttextdemo.model.DataModel;
 import com.wk.selecttextlib.list.ListSelectTextHelp;
-import com.wk.selecttextlib.list.SelectBind;
+import com.wk.selecttextlib.list.bind.SelectTextBind;
 import com.wk.selecttextlib.list.SelectManager;
 import com.wk.selecttextlib.list.listener.OnFindViewListener;
 import com.wk.selecttextlib.list.model.SelectDataInfo;
+import com.wk.selecttextlib.selectText.SelectTextHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,10 +38,12 @@ public class ListActivity extends AppCompatActivity implements OnFindViewListene
 
 
         Random random = new Random();
-        int[] ids = new int[]{R.string.long_text1, R.string.long_text2, R.string.long_text3, R.string.long_text4, R.string.long_text5};
-        List<String> datas = new ArrayList<>();
+        int[] ids = new int[]{R.string.long_text1, R.string.long_text2,
+                R.string.long_text3, R.string.long_text4,
+                R.string.long_text5, R.string.long_text6, R.string.long_text7};
+        List<DataModel> datas = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
-            datas.add(getString(ids[Math.abs(random.nextInt(10) % ids.length)]));
+            datas.add(new DataModel(getString(ids[Math.abs(random.nextInt(10) % ids.length)])));
         }
 
         SimpleListAdapter adapter = new SimpleListAdapter(this, datas);
@@ -48,14 +52,13 @@ public class ListActivity extends AppCompatActivity implements OnFindViewListene
         gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onSingleTapUp(MotionEvent e) {
-                Log.e("详情", "onSingleTapUp-->");
-
                 //轻按选中会执行onLongClick和此方法，重按选中执行onLongClick
                 //点击事件执行此方法
 
                 if (selectTextHelp != null) {
-                    SelectBind selectBind = selectTextHelp.getSelectBind();
+                    SelectTextBind selectBind = selectTextHelp.getSelectBind();
                     if (selectBind != null) {
+                        Log.e("详情", "onSingleTapUp-->" + selectBind);
                         if (selectBind.isTouchDown()) {
                             //说明点击到控件
                             if (selectBind.isTriggerLongClick()) {
@@ -116,7 +119,7 @@ public class ListActivity extends AppCompatActivity implements OnFindViewListene
 //                }
 
                 if (selectTextHelp != null) {
-                    SelectBind selectBind = selectTextHelp.getSelectBind();
+                    SelectTextBind selectBind = selectTextHelp.getSelectBind();
                     if (selectBind != null) {
                         selectBind.onGestureDown(e);
                     }
@@ -128,17 +131,35 @@ public class ListActivity extends AppCompatActivity implements OnFindViewListene
         listView.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
-                Log.e("详情", "滚动监听--》" + scrollState);
+                Log.e("详情", "滚动监听--01-->" + scrollState);
+                if (selectTextHelp != null) {
+                    SelectTextBind selectBind = selectTextHelp.getSelectBind();
+                    if (selectBind != null) {
+                        if (!selectBind.isTouchDown()) {
+                            selectTextHelp.onSelectData(null);
+                            return;
+                        }
+
+                        if (scrollState == SCROLL_STATE_TOUCH_SCROLL || scrollState == SCROLL_STATE_FLING) {
+                            selectTextHelp.onHideSelect();
+                        } else {
+                            refreshPopupLocation();
+                        }
+
+                        Log.e("详情", "滚动监听--02-->" + selectBind.isTouchDown());
+                    }
+                }
             }
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                Log.e("详情", "滚动监听--》scroll");
+//                Log.e("详情", "滚动监听--》scroll");
             }
         });
 
         ListSelectTextHelp selectTextHelp = new ListSelectTextHelp(this, this);
         SelectManager.getInstance().put(this.toString(), selectTextHelp);
+        this.selectTextHelp = selectTextHelp;
     }
 
     private ListSelectTextHelp selectTextHelp;
@@ -172,7 +193,7 @@ public class ListActivity extends AppCompatActivity implements OnFindViewListene
         for (int i = firstVisiblePos; i < lastVisiblePos; i++) {
             Object itemData = adapter.getItem(i);
             if (selectDataInfo.getObject().equals(itemData)) {
-                selectPos = i;
+                selectPos = i - firstVisiblePos;
                 break;
             }
         }
@@ -185,6 +206,33 @@ public class ListActivity extends AppCompatActivity implements OnFindViewListene
         View childView = listView.getChildAt(selectPos);
         return childView;
     }
+
+    protected void refreshPopupLocation() {
+        getWindow().getDecorView().removeCallbacks(runnable);
+        getWindow().getDecorView().postDelayed(runnable, 120);
+    }
+
+    private Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            if (selectTextHelp != null) {
+                SelectDataInfo selectDataInfo = selectTextHelp.getSelectDataInfo();
+                if(selectDataInfo == null) {
+                    return;
+                }
+
+                View view = selectTextHelp.getDependentView();
+                if (view == null) {
+                    selectTextHelp.updateSelectInfo();
+                    return;
+                }
+
+                SelectTextBind selectBind = (SelectTextBind) view.getTag(R.id.select_bind);
+                selectTextHelp.setSelectBind(selectBind);
+                selectTextHelp.onShowSelect();
+            }
+        }
+    };
 
     @Override
     protected void onDestroy() {

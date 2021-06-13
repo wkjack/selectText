@@ -9,16 +9,17 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.wk.selecttextdemo.R;
-import com.wk.selecttextlib.list.SelectBind;
+import com.wk.selecttextdemo.model.DataModel;
+import com.wk.selecttextlib.list.bind.SelectTextBind;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleListAdapter extends BaseAdapter {
     private Context context;
-    private List<String> datas;
+    private List<DataModel> datas;
 
-    public SimpleListAdapter(Context context, List<String> datas) {
+    public SimpleListAdapter(Context context, List<DataModel> datas) {
         this.context = context;
         this.datas = datas;
         if (this.datas == null) {
@@ -55,7 +56,7 @@ public class SimpleListAdapter extends BaseAdapter {
             holder = (Holder) convertView.getTag();
         }
 
-        holder.content.setText(datas.get(position));
+        holder.content.setText(datas.get(position).getData());
         holder.content.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -64,7 +65,7 @@ public class SimpleListAdapter extends BaseAdapter {
         });
 
         
-        SelectBind selectBind = new SelectBind(holder.content, datas.get(position), position);
+        SelectTextBind selectBind = new SelectTextBind(holder.content, datas.get(position), position);
         selectBind.bind();
         return convertView;
     }
