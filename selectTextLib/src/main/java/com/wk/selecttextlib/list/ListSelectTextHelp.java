@@ -136,9 +136,7 @@ public class ListSelectTextHelp implements OnSelectPopListener, OnSelectCursorLi
 
 
     public final void onHideSelect() {
-        if (SelectDataInfo.TYPE_TEXT == selectDataInfo.getType()) {
-            selectBind.clear();
-        }
+        selectBind.clear();
 
         hideSelectPupop();
         hideStartCursor();
@@ -147,9 +145,7 @@ public class ListSelectTextHelp implements OnSelectPopListener, OnSelectCursorLi
 
     public final void onShowSelect() {
         //显示内容
-        if (SelectDataInfo.TYPE_TEXT == selectDataInfo.getType()) {
-            selectBind.update();
-        }
+        selectBind.update();
 
 
         //操作弹框
