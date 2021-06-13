@@ -10,13 +10,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.wk.selecttextlib.SelectOption;
-import com.wk.selecttextlib.SelectionInfo;
-import com.wk.selecttextlib.select.OnSelectListener;
-import com.wk.selecttextlib.select.SelectHelper;
-import com.wk.selecttextlib.selectText.DefOnSelectOptionListener;
-import com.wk.selecttextlib.selectText.SelectTextHelper;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,32 +43,32 @@ public class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.Holder> {
             }
         });
 
-        SelectTextHelper selectTextHelper = new SelectTextHelper.Builder(holder.content)
-                .setSelectedColor(context.getResources().getColor(R.color.selected_blue))
-                .setCursorHandleSizeInDp(20)
-                .setCursorHandleColor(context.getResources().getColor(R.color.cursor_handle_color))
-                .build();
-        selectTextHelper.setSelectOptionListener(new DefOnSelectOptionListener(selectTextHelper) {
-            @Override
-            public List<SelectOption> calculateSelectInfo(@NonNull SelectionInfo selectionInfo, String textContent) {
-                List<SelectOption> optionList = super.calculateSelectInfo(selectionInfo, textContent);
-
-                optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "分享"));
-                optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "搜索"));
-                optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "翻译"));
-                optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "注释"));
-                return optionList;
-            }
-
-            @Override
-            public void onSelectOption(@NonNull SelectionInfo selectionInfo, SelectOption option) {
-                super.onSelectOption(selectionInfo, option);
-                if (option.getType() == SelectOption.TYPE_CUSTOM) {
-                    Log.e("自定义选项：", option.toString());
-                    selectTextHelper.clearOperate();
-                }
-            }
-        });
+//        SelectTextHelper selectTextHelper = new SelectTextHelper.Builder(holder.content)
+//                .setSelectedColor(context.getResources().getColor(R.color.selected_blue))
+//                .setCursorHandleSizeInDp(20)
+//                .setCursorHandleColor(context.getResources().getColor(R.color.cursor_handle_color))
+//                .build();
+//        selectTextHelper.setSelectOptionListener(new DefOnSelectOptionListener(selectTextHelper) {
+//            @Override
+//            public List<SelectOption> calculateSelectInfo(@NonNull SelectionInfo selectionInfo, String textContent) {
+//                List<SelectOption> optionList = super.calculateSelectInfo(selectionInfo, textContent);
+//
+//                optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "分享"));
+//                optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "搜索"));
+//                optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "翻译"));
+//                optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "注释"));
+//                return optionList;
+//            }
+//
+//            @Override
+//            public void onSelectOption(@NonNull SelectionInfo selectionInfo, SelectOption option) {
+//                super.onSelectOption(selectionInfo, option);
+//                if (option.getType() == SelectOption.TYPE_CUSTOM) {
+//                    Log.e("自定义选项：", option.toString());
+//                    selectTextHelper.clearOperate();
+//                }
+//            }
+//        });
 
 //        SelectHelper selectHelper = new SelectHelper.Builder(holder.content)
 //                .build();

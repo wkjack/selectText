@@ -8,17 +8,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-
-import com.wk.selecttextlib.LastSelectListener;
-import com.wk.selecttextlib.LastSelectManager;
-import com.wk.selecttextlib.selectText.DefOnSelectOptionListener;
-import com.wk.selecttextlib.SelectOption;
-import com.wk.selecttextlib.selectText.SelectTextHelper;
-import com.wk.selecttextlib.SelectionInfo;
-
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -33,84 +23,84 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         initView();
 
-        SelectTextHelper mSelectableTextHelper = new SelectTextHelper.Builder(mTvTest)
-                .setSelectedColor(getResources().getColor(R.color.selected_blue))
-                .setCursorHandleSizeInDp(20)
-                .setCursorHandleColor(getResources().getColor(R.color.cursor_handle_color))
-                .build();
-
-        mSelectableTextHelper.setSelectOptionListener(new DefOnSelectOptionListener(mSelectableTextHelper) {
-            @Override
-            public List<SelectOption> calculateSelectInfo(@NonNull SelectionInfo selectionInfo, String textContent) {
-                List<SelectOption> optionList = super.calculateSelectInfo(selectionInfo, textContent);
-
-                optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "分享"));
-                optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "搜索"));
-                optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "翻译"));
-                optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "注释"));
-                return optionList;
-            }
-
-            @Override
-            public void onSelectOption(@NonNull SelectionInfo selectionInfo, SelectOption option) {
-                super.onSelectOption(selectionInfo, option);
-                if (option.getType() == SelectOption.TYPE_CUSTOM) {
-                    Log.e("自定义选项：", option.toString());
-                    selectTextHelper.clearOperate();
-                }
-            }
-        });
-
-        gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
-            @Override
-            public boolean onSingleTapUp(MotionEvent e) {
-                LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
-                if (lastSelect != null) {
-                    lastSelect.clearOperate();
-                    LastSelectManager.getInstance().setLastSelect(null);
-                    return true;
-                }
-                return false;
-            }
-
-            @Override
-            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-                LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
-                if (lastSelect != null) {
-                    if (lastSelect.isOnTouchDown()) {
-                        lastSelect.onScroll();
-                    } else {
-                        lastSelect.onScrollFromOther();
-                        LastSelectManager.getInstance().setLastSelect(null);
-                    }
-                }
-                return super.onScroll(e1, e2, distanceX, distanceY);
-            }
-
-            @Override
-            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
-                if (lastSelect != null) {
-                    if (lastSelect.isOnTouchDown()) {
-                        lastSelect.onFling();
-                    } else {
-                        lastSelect.onScrollFromOther();
-                        LastSelectManager.getInstance().setLastSelect(null);
-                    }
-                }
-
-                return super.onFling(e1, e2, velocityX, velocityY);
-            }
-
-            @Override
-            public boolean onDown(MotionEvent e) {
-                LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
-                if (lastSelect != null) {
-                    lastSelect.onTouchDownOutside(e);
-                }
-                return super.onDown(e);
-            }
-        });
+//        SelectTextHelper mSelectableTextHelper = new SelectTextHelper.Builder(mTvTest)
+//                .setSelectedColor(getResources().getColor(R.color.selected_blue))
+//                .setCursorHandleSizeInDp(20)
+//                .setCursorHandleColor(getResources().getColor(R.color.cursor_handle_color))
+//                .build();
+//
+//        mSelectableTextHelper.setSelectOptionListener(new DefOnSelectOptionListener(mSelectableTextHelper) {
+//            @Override
+//            public List<SelectOption> calculateSelectInfo(@NonNull SelectionInfo selectionInfo, String textContent) {
+//                List<SelectOption> optionList = super.calculateSelectInfo(selectionInfo, textContent);
+//
+//                optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "分享"));
+//                optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "搜索"));
+//                optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "翻译"));
+//                optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "注释"));
+//                return optionList;
+//            }
+//
+//            @Override
+//            public void onSelectOption(@NonNull SelectionInfo selectionInfo, SelectOption option) {
+//                super.onSelectOption(selectionInfo, option);
+//                if (option.getType() == SelectOption.TYPE_CUSTOM) {
+//                    Log.e("自定义选项：", option.toString());
+//                    selectTextHelper.clearOperate();
+//                }
+//            }
+//        });
+//
+//        gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+//            @Override
+//            public boolean onSingleTapUp(MotionEvent e) {
+//                LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
+//                if (lastSelect != null) {
+//                    lastSelect.clearOperate();
+//                    LastSelectManager.getInstance().setLastSelect(null);
+//                    return true;
+//                }
+//                return false;
+//            }
+//
+//            @Override
+//            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+//                LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
+//                if (lastSelect != null) {
+//                    if (lastSelect.isOnTouchDown()) {
+//                        lastSelect.onScroll();
+//                    } else {
+//                        lastSelect.onScrollFromOther();
+//                        LastSelectManager.getInstance().setLastSelect(null);
+//                    }
+//                }
+//                return super.onScroll(e1, e2, distanceX, distanceY);
+//            }
+//
+//            @Override
+//            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+//                LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
+//                if (lastSelect != null) {
+//                    if (lastSelect.isOnTouchDown()) {
+//                        lastSelect.onFling();
+//                    } else {
+//                        lastSelect.onScrollFromOther();
+//                        LastSelectManager.getInstance().setLastSelect(null);
+//                    }
+//                }
+//
+//                return super.onFling(e1, e2, velocityX, velocityY);
+//            }
+//
+//            @Override
+//            public boolean onDown(MotionEvent e) {
+//                LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
+//                if (lastSelect != null) {
+//                    lastSelect.onTouchDownOutside(e);
+//                }
+//                return super.onDown(e);
+//            }
+//        });
     }
 
     private void initView() {
