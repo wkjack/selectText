@@ -32,7 +32,7 @@
 2. 引用库
 
 	```
-	implementation 'com.github.wkjack:selectText:1.1.8'
+	implementation 'com.github.wkjack:selectText:1.1.9'
 	```
 
 3. 使用
@@ -42,49 +42,59 @@
 		* 带文本选择的操作
 			
 			```
-			SelectTextHelper mSelectableTextHelper = new SelectTextHelper.Builder(文本控件)
-						.setSelectedColor(context.getResources().getColor(R.color.selected_blue))
-						.setCursorHandleSizeInDp(20)
-						.setCursorHandleColor(context.getResources().getColor(R.color.cursor_handle_color))
-						.build();
-			mSelectableTextHelper.setSelectOptionListener(new DefOnSelectOptionListener(mSelectableTextHelper) {
-					@Override
-					public List<SelectOption> calculateSelectInfo(@NonNull SelectionInfo selectionInfo, String textContent) {
-						List<SelectOption> optionList = super.calculateSelectInfo(selectionInfo, textContent);
-						optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "分享"));
-						optionList.add(new SelectOption(SelectOption.TYPE_CUSTOM, "搜索"));
-						return optionList;
+			SelectTextBind selectBind = new SelectTextBind(控件, data);
+			selectBind.setOperateListener(new OnOperateListener() {
+				
+				@Override
+				public List<SelectOption> getOperateList() {
+					List<SelectOption> optionList = new ArrayList<>();
+					optionList.add(new SelectOption(SelectOption.TYPE_SELECT_ALL, "全选"));
+					optionList.add(new SelectOption(SelectOption.TYPE_COPY, "复制"));
+					return optionList;
+				}
+				
+				@Override
+				public void onOperate(SelectOption operate) {
+					ListSelectTextHelp selectTextHelp = SelectManager.getInstance().get(selectBind.getSelectKey());
+					if (selectTextHelp != null) {
+						SelectDataInfo selectDataInfo = selectTextHelp.getSelectDataInfo();
+						//操作处理
+						...
+						
+						selectTextHelp.onSelectData(null);
 					}
-					
-					@Override
-					public void onSelectOption(@NonNull SelectionInfo selectionInfo, SelectOption option) {
-						super.onSelectOption(selectionInfo, option);
-						if (option.getType() == SelectOption.TYPE_CUSTOM) {
-							Log.e("自定义选项：", option.toString());
-						}
-					}
+				}
 			});
+			selectBind.bind();
 			```
 	
-			* setSelectedColor：设置文字选中背景色
-			* setCursorHandleSizeInDp：游标大小
-			* setCursorHandleColor：游标色值
-			* setSelectOptionListener：选择回调监听
+			* data：列表item绑定的数据，此数据不能为基础数据和字符串
 
 		* 不含文本选择的操作
 
 			```
-			SelectHelper mSelectHelper = new SelectHelper.Builder(文本控件).build();
-			mSelectHelper.selectHelper.setSelectListener(new OnSelectListener() {
+			SelectBind selectBind = new SelectBind(控件, 数据);
+			selectBind.setOperateListener(new OnOperateListener() {
 				@Override
-				public List<SelectOption> calculateSelectInfo() {
-					//自定义操作选项
-					return null;
+				public List<SelectOption> getOperateList() {
+					List<SelectOption> optionList = new ArrayList<>();
+					optionList.add(new SelectOption(3, "搜索"));
+					optionList.add(new SelectOption(4, "分享"));
+					return optionList;
 				}
-			
+				
 				@Override
-				public void onSelectOption(SelectOption selectOption) {}
+				public void onOperate(SelectOption operate) {
+					//操作处理
+					...
+					
+					ListSelectTextHelp selectTextHelp = SelectManager.getInstance().get(selectBind.getSelectKey());
+					if (selectTextHelp != null) {
+						selectTextHelp.onSelectData(null);
+					}
+				}
 			});
+			selectBind.bind();
 			```
 	2. activity添加手势处理（解决点击空白区域关闭弹框）
 	
@@ -92,6 +102,7 @@
 		public class ListActivity extends AppCompatActivity {
 			
     		private GestureDetector gestureDetector;
+    		private ListSelectTextHelp selectTextHelp;
     		
     		@Override
     		protected void onCreate(Bundle savedInstanceState) {
@@ -101,54 +112,84 @@
     			...
     			
     			gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+    				
     				@Override
     				public boolean onSingleTapUp(MotionEvent e) {
-    					LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
-    					if (lastSelect != null) {
-    						lastSelect.clearOperate();
-    						LastSelectManager.getInstance().setLastSelect(null);
-    						return true;
+    					//轻按选中会执行onLongClick和此方法，重按选中执行onLongClick
+    					//点击事件执行此方法
+    						
+    						if (selectTextHelp != null) {
+    						BaseSelectBind selectBind = selectTextHelp.getSelectBind();
+    						if (selectBind != null) {
+    							Log.e("详情", "onSingleTapUp-->" + selectBind);
+    							if (selectBind.isTouchDown()) {
+    								//说明点击到控件
+    									if (selectBind.isTriggerLongClick()) {
+    									//排除轻按选中数据
+    										return true;
+    								}
+    							}
+    						}
+    						selectTextHelp.onSelectData(null);
     					}
-    					return false;
-					}
-					
-					@Override
-					public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-						LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
-						if (lastSelect != null) {
-							if (lastSelect.isOnTouchDown()) {
-								lastSelect.onScroll();
-							} else {
-								lastSelect.onScrollFromOther();
-								LastSelectManager.getInstance().setLastSelect(null);
-							}
-						}
-						return super.onScroll(e1, e2, distanceX, distanceY);
-					}
-					
-					@Override
-					public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-						LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
-						if (lastSelect != null) {
-							if (lastSelect.isOnTouchDown()) {
-								lastSelect.onFling();
-							} else {
-								lastSelect.onScrollFromOther();
-								LastSelectManager.getInstance().setLastSelect(null);
-							}
-						}
-						return super.onFling(e1, e2, velocityX, velocityY);
-					}
-					
-					@Override
-					public boolean onDown(MotionEvent e) {
-						LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
-						if (lastSelect != null) {
-							lastSelect.onTouchDownOutside(e);
-						}
-						return super.onDown(e);
+    					return true;
+    				}
+    				
+    				@Override
+    				public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+    					Log.e("详情", "onScroll--");
+    					return super.onScroll(e1, e2, distanceX, distanceY);
+    				}
+    				
+    				@Override
+    				public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+    					Log.e("详情", "onFling");
+    					return super.onFling(e1, e2, velocityX, velocityY);
+    				}
+    				
+    				@Override
+    				public boolean onDown(MotionEvent e) {
+    					Log.e("详情", "onDown");
+    					if (selectTextHelp != null) {
+    						BaseSelectBind selectBind = selectTextHelp.getSelectBind();
+    						if (selectBind != null) {
+    							selectBind.onGestureDown(e);
+    						}
+    					}
+    					return super.onDown(e);
+    				}
+    			});
+    			
+    			listView.setOnScrollListener(new AbsListView.OnScrollListener() {
+    				
+    				@Override
+    				public void onScrollStateChanged(AbsListView view, int scrollState) {
+    					if (selectTextHelp != null) {
+    						BaseSelectBind selectBind = selectTextHelp.getSelectBind();
+    						if (selectBind != null) {
+    							if (!selectBind.isTouchDown()) {
+    								selectTextHelp.onSelectData(null);
+    								return;
+    							}
+    							
+    							if (scrollState == SCROLL_STATE_TOUCH_SCROLL || scrollState == SCROLL_STATE_FLING) {
+    								selectTextHelp.onHideSelect();
+    							} else {
+    								refreshPopupLocation();
+    							}
+    						}
+    					}
+    				}
+    				
+    				@Override
+					public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+						// Log.e("详情", "滚动监听--》scroll");
 					}
 				});
+				
+				ListSelectTextHelp selectTextHelp = new ListSelectTextHelp(this, this);
+				SelectManager.getInstance().put(this.toString(), selectTextHelp);
+				this.selectTextHelp = selectTextHelp;
 			}
 			
 			@Override
@@ -160,6 +201,77 @@
 			public boolean dispatchTouchEvent(MotionEvent event) {
 				super.dispatchTouchEvent(event);
 				return gestureDetector.onTouchEvent(event);
+			}
+			
+			@Override
+			public View getViewByData(SelectDataInfo selectDataInfo) {
+				if (listView == null) {
+					return null;
+				}
+				
+				Adapter adapter = listView.getAdapter();
+				if (adapter == null || adapter.getCount() == 0) {
+					return null;
+				}
+				
+				int firstVisiblePos = listView.getFirstVisiblePosition();
+				int lastVisiblePos = listView.getLastVisiblePosition();
+				
+				int selectPos = -1;
+				for (int i = 0, len = lastVisiblePos - firstVisiblePos; i <= len; i++) {
+					Object itemData = adapter.getItem(i + firstVisiblePos);
+					if (selectDataInfo.getObject().equals(itemData)) {
+						selectPos = i;
+						break;
+					}
+				}
+				
+				if (selectPos == -1) {
+					//表明控件已在显示区域外
+					return null;
+				}
+				
+				View childView = listView.getChildAt(selectPos);
+				//此处返回的childView需要注意adapter实现，防止获取不到指定的控件
+				return childView;
+			}
+			
+			protected void refreshPopupLocation() {
+				getWindow().getDecorView().removeCallbacks(runnable);
+				getWindow().getDecorView().postDelayed(runnable, 120);
+			}
+			
+			private Runnable runnable = new Runnable() {
+				
+				@Override
+				public void run() {
+					if (selectTextHelp != null) {
+						SelectDataInfo selectDataInfo = selectTextHelp.getSelectDataInfo();
+						if (selectDataInfo == null) {
+							return;
+						}
+						
+						View view = selectTextHelp.getDependentView();
+						if (view == null) {
+							selectTextHelp.updateSelectInfo();
+							return;
+						}
+						
+						BaseSelectBind selectBind = (BaseSelectBind) view.getTag(R.id.select_bind);
+						selectTextHelp.setSelectBind(selectBind);
+						selectTextHelp.onShowSelect();
+					}
+				}
+			};
+			
+			@Override
+			protected void onDestroy() {
+				super.onDestroy();
+				if (selectTextHelp != null) {
+					selectTextHelp.destory();
+					selectTextHelp = null;
+				}
+				SelectManager.getInstance().clear();
 			}
 		}
 		```
