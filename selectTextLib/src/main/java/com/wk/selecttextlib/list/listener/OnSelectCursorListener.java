@@ -14,4 +14,9 @@ public interface OnSelectCursorListener {
     void showOperatePop();
 
     void updateSelectInfo();
+
+    /**
+     * 显示选中的文本
+     */
+    void showSelectText();
 }

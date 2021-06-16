@@ -88,6 +88,11 @@ public class ListSelectTextHelp implements OnSelectPopListener, OnSelectCursorLi
     }
 
     @Override
+    public void showSelectText() {
+        selectBind.update();
+    }
+
+    @Override
     public void onSelectData(SelectDataInfo newSelectDataInfo) {
         if (this.selectDataInfo != null) {
             if (newSelectDataInfo != null) {

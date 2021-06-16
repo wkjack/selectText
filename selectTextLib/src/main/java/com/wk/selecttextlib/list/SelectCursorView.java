@@ -11,10 +11,10 @@ import android.view.View;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
-import com.wk.selecttextlib.util.TextLayoutUtil;
 import com.wk.selecttextlib.list.listener.OnSelectCursorListener;
 import com.wk.selecttextlib.list.listener.OnSelectPopListener;
 import com.wk.selecttextlib.list.model.SelectDataInfo;
+import com.wk.selecttextlib.util.TextLayoutUtil;
 
 /**
  * 游标控件
@@ -175,53 +175,13 @@ public class SelectCursorView extends View {
                     if (offset == selectStart) {
                         offset = selectStart + 1;
                     }
-                    selectDataInfo.setStart(offset);
+                    selectDataInfo.setEnd(offset);
                     selectCursorListener.updateSelectInfo();
 
                     show();
                 }
             }
-        }
-    }
-
-    private void firstShow() {
-        try {
-            View dependentView = selectPopListener.getDependentView();
-            SelectDataInfo selectDataInfo = selectPopListener.getSelectDataInfo();
-
-            if (selectDataInfo == null || SelectDataInfo.TYPE_TEXT != selectDataInfo.getType()
-                    || dependentView == null) {
-                return;
-            }
-            if (!(dependentView instanceof TextView)) {
-                return;
-            }
-
-            int selectStart = selectDataInfo.getStart();
-            int selectEnd = selectDataInfo.getEnd();
-            TextView mTextView = (TextView) dependentView;
-
-            int[] mTempCoors = new int[2];
-            mTextView.getLocationInWindow(mTempCoors);
-            Layout layout = mTextView.getLayout();
-
-            int offset = isLeft ? selectStart : selectEnd;
-
-            //获取该字符左边的x坐标
-            int x = (int) layout.getPrimaryHorizontal(offset);
-            //先获取所在行数，再获取此行的底部位置
-            int y = layout.getLineBottom(layout.getLineForOffset(offset));
-
-            int realX = mTempCoors[0] + mTextView.getPaddingLeft() + x - (isLeft ? mWidth : 0);
-            int realY = mTempCoors[1] + mTextView.getPaddingTop() + y;
-
-
-            Rect rect = new Rect();
-            mTextView.getGlobalVisibleRect(rect);
-
-            mPopupWindow.showAtLocation(mTextView, Gravity.NO_GRAVITY, realX, realY);
-        } catch (Exception e) {
-            e.printStackTrace();
+            selectCursorListener.showSelectText();
         }
     }
 
