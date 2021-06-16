@@ -89,7 +89,9 @@ public class ListSelectTextHelp implements OnSelectPopListener, OnSelectCursorLi
 
     @Override
     public void showSelectText() {
-        selectBind.update();
+        if (selectBind != null) {
+            selectBind.update();
+        }
     }
 
     @Override
@@ -139,7 +141,9 @@ public class ListSelectTextHelp implements OnSelectPopListener, OnSelectCursorLi
 
 
     public final void onHideSelect() {
-        selectBind.clear();
+        if (selectBind != null) {
+            selectBind.clear();
+        }
 
         hideSelectPupop();
         hideStartCursor();
