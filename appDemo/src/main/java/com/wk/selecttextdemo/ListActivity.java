@@ -68,55 +68,24 @@ public class ListActivity extends AppCompatActivity implements OnFindViewListene
                     }
                     selectTextHelp.onSelectData(null);
                 }
-
-//                LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
-//                if (lastSelect != null) {
-//                    lastSelect.clearOperate();
-//                    LastSelectManager.getInstance().setLastSelect(null);
-//                    return true;
-//                }
                 return true;
             }
 
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
                 Log.e("详情", "onScroll--");
-//                LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
-//                if (lastSelect != null) {
-//                    if (lastSelect.isOnTouchDown()) {
-//                        lastSelect.onScroll();
-//                    } else {
-//                        lastSelect.onScrollFromOther();
-//                        LastSelectManager.getInstance().setLastSelect(null);
-//                    }
-//                }
                 return super.onScroll(e1, e2, distanceX, distanceY);
             }
 
             @Override
             public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
                 Log.e("详情", "onFling");
-//                LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
-//                if (lastSelect != null) {
-//                    if (lastSelect.isOnTouchDown()) {
-//                        lastSelect.onFling();
-//                    } else {
-//                        lastSelect.onScrollFromOther();
-//                        LastSelectManager.getInstance().setLastSelect(null);
-//                    }
-//                }
-
                 return super.onFling(e1, e2, velocityX, velocityY);
             }
 
             @Override
             public boolean onDown(MotionEvent e) {
                 Log.e("详情", "onDown");
-//                LastSelectListener lastSelect = LastSelectManager.getInstance().getLastSelect();
-//                if (lastSelect != null) {
-//                    lastSelect.onTouchDownOutside(e);
-//                }
-
                 if (selectTextHelp != null) {
                     BaseSelectBind selectBind = selectTextHelp.getSelectBind();
                     if (selectBind != null) {
@@ -130,7 +99,6 @@ public class ListActivity extends AppCompatActivity implements OnFindViewListene
         listView.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
-                Log.e("详情", "滚动监听--01-->" + scrollState);
                 if (selectTextHelp != null) {
                     BaseSelectBind selectBind = selectTextHelp.getSelectBind();
                     if (selectBind != null) {
@@ -144,15 +112,13 @@ public class ListActivity extends AppCompatActivity implements OnFindViewListene
                         } else {
                             refreshPopupLocation();
                         }
-
-                        Log.e("详情", "滚动监听--02-->" + selectBind.isTouchDown());
                     }
                 }
             }
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-//                Log.e("详情", "滚动监听--》scroll");
+                // Log.e("详情", "滚动监听--》scroll");
             }
         });
 
@@ -189,10 +155,10 @@ public class ListActivity extends AppCompatActivity implements OnFindViewListene
         int lastVisiblePos = listView.getLastVisiblePosition();
 
         int selectPos = -1;
-        for (int i = firstVisiblePos; i < lastVisiblePos; i++) {
-            Object itemData = adapter.getItem(i);
+        for (int i = 0, len = lastVisiblePos - firstVisiblePos; i <= len; i++) {
+            Object itemData = adapter.getItem(i + firstVisiblePos);
             if (selectDataInfo.getObject().equals(itemData)) {
-                selectPos = i - firstVisiblePos;
+                selectPos = i;
                 break;
             }
         }
@@ -216,7 +182,7 @@ public class ListActivity extends AppCompatActivity implements OnFindViewListene
         public void run() {
             if (selectTextHelp != null) {
                 SelectDataInfo selectDataInfo = selectTextHelp.getSelectDataInfo();
-                if(selectDataInfo == null) {
+                if (selectDataInfo == null) {
                     return;
                 }
 
