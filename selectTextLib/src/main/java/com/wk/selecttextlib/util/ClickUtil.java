@@ -26,4 +26,22 @@ public class ClickUtil {
         }
         return null;
     }
+
+    @SuppressLint("DiscouragedPrivateApi")
+    public static View.OnLongClickListener getViewLongClickListener(@NonNull View view) {
+        try {
+            Field field = View.class.getDeclaredField("mListenerInfo");
+            field.setAccessible(true);
+            Object object = field.get(view);
+            field = object.getClass().getDeclaredField("mOnLongClickListener");
+            field.setAccessible(true);
+            object = field.get(object);
+            if (object != null && object instanceof View.OnLongClickListener) {
+                return ((View.OnLongClickListener) object);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
