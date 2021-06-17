@@ -69,28 +69,28 @@ public class SelectTextBind extends BaseSelectBind {
 
                 case MotionEvent.ACTION_MOVE:
                     //应对按下后触发点击事件后继续滑动，此时隐藏操作
-                    if (isTriggerLongClick) {
-                        //已触发点击事件
-                    }
+//                    if (isTriggerLongClick) {
+//                        //已触发点击事件
+//                    }
                     break;
 
                 case MotionEvent.ACTION_CANCEL:
                     //应对按下后触发点击事件后继续滑动,松开时已划出控件区域
-                    if (isTriggerLongClick) {
-                        //已触发点击事件
-
-                        //移出选中数据
-                        ListSelectTextHelp selectTextHelp = SelectManager.getInstance().get(getSelectKey());
-                        if (selectTextHelp != null) {
-                            selectTextHelp.onSelectData(null);
-                        }
-                    }
+//                    if (isTriggerLongClick) {
+//                        //已触发点击事件
+//
+//                        //移出选中数据
+//                        ListSelectTextHelp selectTextHelp = SelectManager.getInstance().get(getSelectKey());
+//                        if (selectTextHelp != null) {
+//                            selectTextHelp.onSelectData(null);
+//                        }
+//                    }
                     break;
 
                 case MotionEvent.ACTION_UP:
                     //应对按下后触发点击事件后继续滑动直到松开，此时显示操作
-                    if (isTriggerLongClick) {
-                    }
+//                    if (isTriggerLongClick) {
+//                    }
                     break;
             }
             return false;
@@ -118,13 +118,9 @@ public class SelectTextBind extends BaseSelectBind {
         Rect viewRect = new Rect();
         mTextView.getGlobalVisibleRect(viewRect);
 
-        if (event.getAction() == MotionEvent.ACTION_DOWN
+        isTouchDown = event.getAction() == MotionEvent.ACTION_DOWN
                 && event.getX() >= viewRect.left && event.getX() <= viewRect.right
-                && event.getY() >= viewRect.top && event.getY() <= viewRect.bottom) {
-            isTouchDown = true;
-        } else {
-            isTouchDown = false;
-        }
+                && event.getY() >= viewRect.top && event.getY() <= viewRect.bottom;
         downEvent = null;
     }
 
