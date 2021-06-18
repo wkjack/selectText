@@ -40,12 +40,6 @@ public class SelectTextBind extends BaseSelectBind {
 
         mTextView.setOnLongClickListener(v -> {
 
-            if (originalLongClickListener != null) {
-                if (originalLongClickListener.onLongClick(v)) {
-                    return true;
-                }
-            }
-
             isTriggerLongClick = true;
 
             //构建选中信息
