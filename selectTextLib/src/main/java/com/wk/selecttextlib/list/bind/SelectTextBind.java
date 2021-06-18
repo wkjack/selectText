@@ -24,8 +24,7 @@ public class SelectTextBind extends BaseSelectBind {
     private Object data;
     private TextView mTextView;
 
-    private View.OnClickListener originalClickListener;
-
+    private View.OnLongClickListener originalLongClickListener;
     private Spannable mSpannable; //文本内容
     private BackgroundColorSpan mSpan; //选中背景Span
 
@@ -37,9 +36,15 @@ public class SelectTextBind extends BaseSelectBind {
     @SuppressLint("ClickableViewAccessibility")
     public void bind() {
         mTextView.setText(mTextView.getText(), TextView.BufferType.SPANNABLE);
-        originalClickListener = ClickUtil.getViewClickListener(mTextView);
+        originalLongClickListener = ClickUtil.getViewLongClickListener(mTextView);
 
         mTextView.setOnLongClickListener(v -> {
+
+            if (originalLongClickListener != null) {
+                if (originalLongClickListener.onLongClick(v)) {
+                    return true;
+                }
+            }
 
             isTriggerLongClick = true;
 
@@ -94,16 +99,6 @@ public class SelectTextBind extends BaseSelectBind {
                     break;
             }
             return false;
-        });
-
-        mTextView.setOnClickListener(v -> {
-
-            if (isTouchDown) {
-                //原有点击处理
-                if (originalClickListener != null) {
-                    originalClickListener.onClick(v);
-                }
-            }
         });
 
         mTextView.setTag(R.id.select_bind, this);

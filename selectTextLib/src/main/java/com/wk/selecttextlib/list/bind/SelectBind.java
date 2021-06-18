@@ -19,7 +19,7 @@ public class SelectBind extends BaseSelectBind {
     private Object data;
     private View mView;
 
-    private View.OnClickListener originalClickListener;
+    private View.OnLongClickListener originalLongClickListener;
 
     public SelectBind(View view, Object data) {
         this.mView = view;
@@ -28,9 +28,15 @@ public class SelectBind extends BaseSelectBind {
 
     @SuppressLint("ClickableViewAccessibility")
     public void bind() {
-        originalClickListener = ClickUtil.getViewClickListener(mView);
+        originalLongClickListener = ClickUtil.getViewLongClickListener(mView);
 
         mView.setOnLongClickListener(v -> {
+
+            if (originalLongClickListener != null) {
+                if (originalLongClickListener.onLongClick(v)) {
+                    return true;
+                }
+            }
 
             isTriggerLongClick = true;
 
@@ -82,16 +88,6 @@ public class SelectBind extends BaseSelectBind {
                     break;
             }
             return false;
-        });
-
-        mView.setOnClickListener(v -> {
-
-            if (isTouchDown) {
-                //原有点击处理
-                if (originalClickListener != null) {
-                    originalClickListener.onClick(v);
-                }
-            }
         });
 
         mView.setTag(R.id.select_bind, this);
