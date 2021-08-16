@@ -11,7 +11,6 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
@@ -21,10 +20,10 @@ import androidx.annotation.NonNull;
 import com.wk.selecttextlib.R;
 import com.wk.selecttextlib.SelectOption;
 import com.wk.selecttextlib.SelectOptionAdapter;
-import com.wk.selecttextlib.util.TextLayoutUtil;
 import com.wk.selecttextlib.list.listener.OnOperateListener;
 import com.wk.selecttextlib.list.listener.OnSelectPopListener;
 import com.wk.selecttextlib.list.model.SelectDataInfo;
+import com.wk.selecttextlib.util.TextLayoutUtil;
 
 import java.util.List;
 
@@ -57,12 +56,9 @@ public class SelectPupop {
 
         SelectOptionAdapter adapter = new SelectOptionAdapter(context, mSelectOptions);
         gridView.setAdapter(adapter);
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                SelectOption selectOption = mSelectOptions.get(position);
-                operateListener.onOperate(selectOption);
-            }
+        gridView.setOnItemClickListener((parent, view, position, id) -> {
+            SelectOption selectOption = mSelectOptions.get(position);
+            operateListener.onOperate(selectOption);
         });
 
         int optionSize = mSelectOptions.size();
@@ -70,8 +66,16 @@ public class SelectPupop {
         gridView.setNumColumns(Math.min(optionSize, 5));
 
 
+        int maxItemLenth = 3;
+        for (SelectOption option : mSelectOptions) {
+            if (option.getName() != null && option.getName().length() > maxItemLenth) {
+                maxItemLenth = option.getName().length();
+            }
+        }
+        int itemWidth = 60 + (maxItemLenth > 6 ? 3 : (maxItemLenth - 3)) * 5;
+
         mWidth = contentView.getPaddingLeft() + contentView.getPaddingRight()
-                + Math.min(optionSize, 5) * TextLayoutUtil.dp2px(context, 60)
+                + Math.min(optionSize, 5) * TextLayoutUtil.dp2px(context, itemWidth)
                 + (Math.min(optionSize, 5) - 1) * gridView.getHorizontalSpacing();
 
         int line;
@@ -211,11 +215,11 @@ public class SelectPupop {
         Rect viewRect = new Rect();
         dependentView.getGlobalVisibleRect(viewRect);
 
-        if(mTempCoors[0] != viewRect.left && mTempCoors[1] !=viewRect.top) {
+        if (mTempCoors[0] != viewRect.left && mTempCoors[1] != viewRect.top) {
             //经过实验，此种情况为控件已无显示区域
 
             int posX = 0;
-            int posY = -mHeight -16;
+            int posY = -mHeight - 16;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 //设置高度
                 mWindow.setElevation(8f);
