@@ -10,7 +10,7 @@
         android:id="@+id/select_option"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:horizontalSpacing="5dp"
+        android:horizontalSpacing="2dp"
         android:verticalSpacing="5dp" />
 
 </LinearLayout>
