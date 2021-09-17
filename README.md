@@ -32,7 +32,7 @@
 2. 引用库
 
 	```
-	implementation 'com.github.wkjack:selectText:1.2.4'
+	implementation 'com.github.wkjack:selectText:1.2.5'
 	```
 
 3. 使用
