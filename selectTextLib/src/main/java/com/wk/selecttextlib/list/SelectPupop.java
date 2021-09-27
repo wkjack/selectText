@@ -32,6 +32,8 @@ import java.util.List;
  */
 public class SelectPupop {
 
+    private final int PADDING = 10;
+
     private PopupWindow mWindow; //弹框
     private int mWidth; //宽
     private int mHeight; //高
@@ -62,21 +64,25 @@ public class SelectPupop {
         });
 
         int optionSize = mSelectOptions.size();
-
-        gridView.setNumColumns(Math.min(optionSize, 5));
-
-
-        int maxItemLenth = 3;
-        for (SelectOption option : mSelectOptions) {
-            if (option.getName() != null && option.getName().length() > maxItemLenth) {
-                maxItemLenth = option.getName().length();
-            }
-        }
+        int numCol = Math.min(optionSize, 5);
+        int maxItemLenth = getMaxItemLength();
         int itemWidth = 60 + (maxItemLenth > 6 ? 3 : (maxItemLenth - 3)) * 5;
 
-        mWidth = contentView.getPaddingLeft() + contentView.getPaddingRight()
-                + Math.min(optionSize, 5) * TextLayoutUtil.dp2px(context, itemWidth)
-                + (Math.min(optionSize, 5) - 1) * gridView.getHorizontalSpacing();
+        int tmpWidth = contentView.getPaddingLeft() + contentView.getPaddingRight()
+                + numCol * TextLayoutUtil.dp2px(context, itemWidth)
+                + (numCol - 1) * gridView.getHorizontalSpacing();
+        int screenWidth = TextLayoutUtil.getScreenWidth(context);
+
+        if (tmpWidth + 2 * PADDING >= screenWidth) {
+            //此逻辑是为了保证弹出框与屏幕两边有间距
+            numCol-=1;
+            tmpWidth = contentView.getPaddingLeft() + contentView.getPaddingRight()
+                    + numCol * TextLayoutUtil.dp2px(context, itemWidth)
+                    + (numCol - 1) * gridView.getHorizontalSpacing();
+        }
+        mWidth = tmpWidth;
+        gridView.setNumColumns(numCol);
+
 
         int line;
         if (optionSize <= 5) {
@@ -94,6 +100,19 @@ public class SelectPupop {
 
         mWindow = new PopupWindow(contentView, mWidth, ViewGroup.LayoutParams.WRAP_CONTENT, false);
         mWindow.setClippingEnabled(false); //弹框在超出屏幕时不剪裁，即显示在正确的位置
+    }
+
+    /**
+     * 计算item的最大长度
+     */
+    private int getMaxItemLength() {
+        int maxItemLenth = 3;
+        for (SelectOption option : mSelectOptions) {
+            if (option.getName() != null && option.getName().length() > maxItemLenth) {
+                maxItemLenth = option.getName().length();
+            }
+        }
+        return maxItemLenth;
     }
 
     /**
@@ -145,7 +164,7 @@ public class SelectPupop {
                 //弹框超出控件范围，但未超出屏幕
                 posX = viewRect.left;
             } else {
-                posX = TextLayoutUtil.getScreenWidth(mContext) - mWidth;
+                posX = TextLayoutUtil.getScreenWidth(mContext) - mWidth - PADDING;
             }
 
             //获取decorView的显示区域
@@ -238,7 +257,7 @@ public class SelectPupop {
             //弹框超出控件范围，但未超出屏幕
             posX = viewRect.left;
         } else {
-            posX = TextLayoutUtil.getScreenWidth(mContext) - mWidth;
+            posX = TextLayoutUtil.getScreenWidth(mContext) - mWidth - PADDING;
         }
 
         //获取decorView的显示区域
