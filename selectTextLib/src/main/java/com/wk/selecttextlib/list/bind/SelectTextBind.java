@@ -39,7 +39,9 @@ public class SelectTextBind extends BaseSelectBind {
         originalLongClickListener = ClickUtil.getViewLongClickListener(mTextView);
 
         mTextView.setOnLongClickListener(v -> {
-
+            if (originalLongClickListener !=null) {
+                originalLongClickListener.onLongClick(v);
+            }
             isTriggerLongClick = true;
 
             //构建选中信息
